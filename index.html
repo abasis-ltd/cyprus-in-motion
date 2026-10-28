@@ -398,7 +398,7 @@
     kapnos: () => {
       const rows = O.kapnos.sample.departures.filter(r => r.dep >= '07:00').slice(0, 8);
       return `${frame('Transit Editor', `<video src="media/gtfs-editor-sm.mp4" poster="media/gtfs-editor-poster.jpg" muted loop playsinline preload="none" data-auto></video>`)}
-        <div class="cap">Real capture: the editor with the Kapnos Airport Shuttle routes, timetable grid and health check</div>
+        <div class="cap">Real capture: the editor with the Kapnos Airport Shuttle routes, weekly timetable grid and feed health check</div>
         <div class="panel mini-map"><div class="hd"><span>Kapnos Airport Shuttle · 4 routes</span><span>real shapes</span></div><div class="bd">${svgOf(O.kapnos)}</div></div>
         <div class="panel"><div class="hd"><span>R1 Nicosia → Larnaca Airport</span><span>Mon 6 Jul 2026</span></div>
         <table class="t"><thead><tr><th>Depart</th><th>Arrive</th><th>Stop</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.dep}</td><td class="hl">${r.arr}</td><td>LCA</td></tr>`).join('')}</tbody></table></div>`;
