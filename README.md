@@ -3,7 +3,7 @@
 Website, looping expo show, phone game and print materials for Abasis.AI's Cyprus transport projects.
 
 - **Website** — `index.html`: all 12 projects (create, validate, track, predict, understand, move) with real numbers, honest status, screenshots and clips.
-- **Show** — `show/`: an 8-minute looping presentation drawn on a live map of every bus line in Cyprus. Keys: Space pause · ← → scenes · 1–6 chapters · F full screen. `?render=1` exposes a deterministic frame renderer used to export the MP4.
+- **Show** — `show/`: a 9-minute looping presentation drawn on a live map of every bus line in Cyprus. Keys: Space pause · ← → scenes · 1–6 chapters · F full screen. `?render=1` exposes a deterministic frame renderer used to export the MP4.
 - **Game** — `play/`: *Beat the Bus*, guess when real Nicosia buses arrived. `?booth=1` for the stand tablet.
 - **Print** — `brochure.pdf` (A4 tri-fold) and `card.pdf` (A5 “Scan to play” card); sources `brochure.html`, `card.html`.
 - **Stand** — `kit.html`, plus `Start show (kiosk).command` and `Start game (kiosk).command` for a Mac (everything runs offline from this folder).
