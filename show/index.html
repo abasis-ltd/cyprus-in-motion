@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cyprus in Motion — Show</title>
+<link rel="icon" href="../assets/abasis-icon.svg">
+<link rel="stylesheet" href="../expo.css">
+<style>
+  /* 1u = 1% of a 16:9 frame that fits the screen, so the show scales to any display */
+  :root { --u: min(1vw, 1.7778vh); }
+  html, body { overflow: hidden; background: var(--night); }
+  body { cursor: none; }
+  body.cursor { cursor: default; }
+  #map { position: fixed; inset: 0; width: 100vw; height: 100vh; }
+  #veil, #shade { position: fixed; inset: 0; pointer-events: none; }
+  #veil { background: linear-gradient(90deg, rgba(8,46,159,.96) 0%, rgba(8,46,159,.82) 34%, rgba(8,46,159,0) 62%); }
+  #shade { background: radial-gradient(90% 80% at 50% 50%, rgba(15,23,42,.72), rgba(15,23,42,.92)); }
+  #edge { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(130% 100% at 65% 50%, transparent 55%, rgba(15,23,42,.85) 100%); }
+
+  header { position: fixed; top: calc(var(--u) * 2); left: calc(var(--u) * 4); right: calc(var(--u) * 4); display: flex; align-items: center; justify-content: space-between; z-index: 5; }
+  .logo { height: calc(var(--u) * 3.2); margin-left: calc(var(--u) * -.9); }
+  #line { position: relative; width: calc(var(--u) * 46); height: calc(var(--u) * 3); }
+  #line .rail { position: absolute; left: 0; right: 0; top: calc(var(--u) * .9); height: 2px; background: rgba(248,250,252,.18); }
+  #line .stop { position: absolute; top: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * .35); }
+  #line .stop i { width: calc(var(--u) * .9); height: calc(var(--u) * .9); border-radius: 50%; border: 2px solid rgba(248,250,252,.4); background: var(--night); margin-top: calc(var(--u) * .45); }
+  #line .stop span { font-family: var(--mono); font-size: calc(var(--u) * .74); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  #line .stop.on i { background: var(--blue); border-color: var(--blue-soft); box-shadow: 0 0 0 calc(var(--u) * .35) rgba(10,92,255,.35); }
+  #line .stop.on span { color: var(--ink); }
+  #line .bus { position: absolute; top: calc(var(--u) * .05); width: calc(var(--u) * 2.2); height: calc(var(--u) * 1.5); transform: translateX(-50%); border-radius: calc(var(--u) * .35); background: #fff; box-shadow: 0 0 calc(var(--u) * 1) rgba(147,197,253,.8); }
+  #line .bus::before { content: ""; position: absolute; left: 12%; right: 12%; top: 22%; height: 32%; background: repeating-linear-gradient(90deg, var(--blue) 0 22%, transparent 22% 33%); }
+  #clock { font-family: var(--mono); font-size: calc(var(--u) * .85); color: var(--muted); display: flex; gap: calc(var(--u) * 1.2); align-items: center; min-width: calc(var(--u) * 14); justify-content: flex-end; }
+  #clock .live { color: var(--ink); display: inline-flex; align-items: center; gap: calc(var(--u) * .5); }
+  #clock .live::before { content: ""; width: calc(var(--u) * .55); height: calc(var(--u) * .55); border-radius: 50%; background: var(--blue-mid); }
+
+  #qr { position: fixed; right: calc(var(--u) * 3); bottom: calc(var(--u) * 2.6); z-index: 5; display: flex; align-items: center; gap: calc(var(--u) * 1); padding: calc(var(--u) * .7); padding-right: calc(var(--u) * 1.4); border-radius: calc(var(--u) * 1); background: rgba(248,250,252,.96); color: var(--on-light); box-shadow: 0 calc(var(--u) * 1) calc(var(--u) * 3) rgba(0,0,0,.35); }
+  #qr img { width: calc(var(--u) * 6.2); height: calc(var(--u) * 6.2); display: block; }
+  #qr b { display: block; font-size: calc(var(--u) * 1.05); letter-spacing: -.01em; }
+  #qr span { font-family: var(--mono); font-size: calc(var(--u) * .7); color: #475569; }
+
+  footer { position: fixed; left: calc(var(--u) * 4); right: calc(var(--u) * 4); bottom: calc(var(--u) * 1.6); display: flex; gap: calc(var(--u) * .4); z-index: 5; }
+  footer div { height: 3px; background: rgba(248,250,252,.14); border-radius: 3px; overflow: hidden; }
+  footer div i { display: block; height: 100%; width: 0; background: var(--blue-soft); }
+  #hint { position: fixed; bottom: calc(var(--u) * 2.4); left: calc(var(--u) * 4); font-family: var(--mono); font-size: calc(var(--u) * .7); color: var(--muted); z-index: 6; opacity: 0; }
+  body.cursor #hint { opacity: 1; }
+  body.paused #hint::after { content: " · PAUSED"; color: var(--accent); }
+
+  /* scene layout */
+  .scene { position: fixed; inset: 0; z-index: 4; pointer-events: none; }
+  .scene [data-in] { opacity: 0; will-change: opacity, transform; }
+  .col-left { position: absolute; left: calc(var(--u) * 5); top: 52%; transform: translateY(-50%); width: calc(var(--u) * 41); }
+  .col-right { position: absolute; right: calc(var(--u) * 4); top: 49%; transform: translateY(-50%); width: calc(var(--u) * 47); }
+  .center { position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%); width: calc(var(--u) * 86); text-align: center; }
+  .kicker { font-size: calc(var(--u) * .92); margin-bottom: calc(var(--u) * 1.6); display: flex; align-items: center; gap: calc(var(--u) * .8); }
+  .center .kicker { justify-content: center; }
+  .kicker::before { content: ""; width: calc(var(--u) * 2.6); height: 2px; background: currentColor; }
+  h1 { font-weight: 800; font-size: calc(var(--u) * 6.6); line-height: .92; letter-spacing: -.055em; margin: 0 0 calc(var(--u) * 2.2); }
+  h2 { font-weight: 800; font-size: calc(var(--u) * 3.9); line-height: 1.02; letter-spacing: -.045em; margin: 0 0 calc(var(--u) * 1.9); }
+  h1 em, h2 em, .em { font-style: normal; background: linear-gradient(90deg, #93c5fd, #dbeafe); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lede { font-size: calc(var(--u) * 1.45); line-height: 1.45; color: var(--text-2); margin: 0 0 calc(var(--u) * 2.4); max-width: calc(var(--u) * 39); }
+  .center .lede { margin-left: auto; margin-right: auto; max-width: calc(var(--u) * 60); }
+  .note { font-family: var(--mono); font-size: calc(var(--u) * .74); color: var(--muted); line-height: 1.65; max-width: calc(var(--u) * 40); }
+  .center .note { margin: 0 auto; max-width: calc(var(--u) * 56); }
+  .stats { display: flex; gap: calc(var(--u) * 3); margin-bottom: calc(var(--u) * 2.4); }
+  .center .stats { justify-content: center; }
+  .stat b { display: block; font-weight: 800; font-size: calc(var(--u) * 3.1); letter-spacing: -.045em; font-variant-numeric: tabular-nums; line-height: 1.05; }
+  .stat span { font-family: var(--mono); font-size: calc(var(--u) * .74); color: var(--blue-soft); text-transform: uppercase; letter-spacing: .14em; }
+  .mega { font-weight: 800; font-size: calc(var(--u) * 7.6); letter-spacing: -.06em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .mega-sub { font-family: var(--mono); font-size: calc(var(--u) * 1.05); letter-spacing: .16em; text-transform: uppercase; color: var(--blue-soft); margin: calc(var(--u) * 1) 0 calc(var(--u) * 2.4); }
+  .steps { list-style: none; padding: 0; margin: 0 0 calc(var(--u) * 2.2); counter-reset: s; }
+  .steps li { display: flex; gap: calc(var(--u) * 1.1); align-items: flex-start; font-size: calc(var(--u) * 1.32); line-height: 1.38; margin-bottom: calc(var(--u) * 1.05); }
+  .steps li::before { counter-increment: s; content: counter(s); flex: none; width: calc(var(--u) * 2.1); height: calc(var(--u) * 2.1); border-radius: 50%; background: var(--blue); display: grid; place-items: center; font-family: var(--mono); font-size: calc(var(--u) * .85); font-weight: 600; margin-top: calc(var(--u) * -.15); }
+  .pill { display: inline-flex; align-items: center; gap: calc(var(--u) * .6); font-family: var(--mono); font-size: calc(var(--u) * .78); padding: calc(var(--u) * .5) calc(var(--u) * 1.1); border-radius: 99px; background: rgba(147,197,253,.14); color: var(--blue-pale); border: 1px solid rgba(147,197,253,.32); margin: 0 calc(var(--u) * .6) calc(var(--u) * 1.4) 0; }
+  .pill::before { content: ""; width: calc(var(--u) * .55); height: calc(var(--u) * .55); border-radius: 50%; background: var(--blue-mid); }
+  .chip { display: inline-block; font-family: var(--mono); font-size: calc(var(--u) * .78); padding: calc(var(--u) * .45) calc(var(--u) * .9); border-radius: calc(var(--u) * .4); background: var(--ink); color: var(--on-light); font-weight: 600; }
+
+  /* media frames */
+  .browser { border-radius: calc(var(--u) * .9); overflow: hidden; background: #0b1220; box-shadow: 0 calc(var(--u) * 3) calc(var(--u) * 7) rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.1); }
+  .browser .bar { height: calc(var(--u) * 2.2); display: flex; align-items: center; gap: calc(var(--u) * .5); padding: 0 calc(var(--u) * 1); background: #1e293b; }
+  .browser .bar i { width: calc(var(--u) * .72); height: calc(var(--u) * .72); border-radius: 50%; background: #475569; }
+  .browser .bar span { margin-left: calc(var(--u) * 1); flex: 1; height: calc(var(--u) * 1.35); border-radius: calc(var(--u) * .7); background: #0f172a; font-family: var(--mono); font-size: calc(var(--u) * .72); color: var(--text-2); display: flex; align-items: center; padding-left: calc(var(--u) * 1); }
+  .browser .view { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: #fff; }
+  .browser .view > * { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .paper { background: #fff; border-radius: calc(var(--u) * .4); box-shadow: 0 calc(var(--u) * 3) calc(var(--u) * 6) rgba(0,0,0,.5); overflow: hidden; }
+  .paper img { display: block; width: 100%; }
+  .caption { font-family: var(--mono); font-size: calc(var(--u) * .74); color: var(--blue-soft); margin-top: calc(var(--u) * 1); }
+
+  .phone { position: absolute; width: calc(var(--u) * 17); height: calc(var(--u) * 32); border-radius: calc(var(--u) * 2.6); border: calc(var(--u) * .55) solid #334155; background: var(--night); box-shadow: 0 calc(var(--u) * 3) calc(var(--u) * 6) rgba(0,0,0,.6); overflow: hidden; color: var(--ink); }
+  .phone .ph-top { height: calc(var(--u) * 3.6); display: flex; align-items: flex-end; justify-content: center; padding-bottom: calc(var(--u) * .5); font-family: var(--mono); font-size: calc(var(--u) * .66); color: var(--muted); letter-spacing: .12em; }
+  .phone .ph-card { margin: calc(var(--u) * .7) calc(var(--u) * .9); padding: calc(var(--u) * .9) calc(var(--u) * 1); border-radius: calc(var(--u) * 1); background: rgba(248,250,252,.07); }
+  .phone .ph-card small { display: block; font-family: var(--mono); font-size: calc(var(--u) * .6); color: var(--muted); text-transform: uppercase; letter-spacing: .12em; margin-bottom: calc(var(--u) * .3); }
+  .phone .ph-card b { font-size: calc(var(--u) * 1.15); letter-spacing: -.02em; }
+  .phone .ph-go { margin: calc(var(--u) * 1) calc(var(--u) * .9); padding: calc(var(--u) * 1) 0; border-radius: 99px; background: var(--blue); text-align: center; font-weight: 700; font-size: calc(var(--u) * 1); }
+  .phone .ph-log { font-family: var(--mono); font-size: calc(var(--u) * .62); line-height: 1.8; color: var(--blue-soft); padding: 0 calc(var(--u) * 1.2); white-space: pre; }
+  .tag-illus { position: absolute; top: calc(var(--u) * -2.4); left: 50%; transform: translateX(-50%); font-family: var(--mono); font-size: calc(var(--u) * .62); letter-spacing: .14em; color: var(--muted); white-space: nowrap; }
+
+  /* chapter cards */
+  .chapter .cc-num { font-weight: 800; font-size: calc(var(--u) * 15); line-height: .8; letter-spacing: -.06em; color: transparent; -webkit-text-stroke: calc(var(--u) * .14) rgba(147,197,253,.75); }
+  .chapter .cc-title { font-weight: 800; font-size: calc(var(--u) * 7); letter-spacing: -.055em; line-height: 1; margin: calc(var(--u) * 1.2) 0 calc(var(--u) * 1.4); }
+  .chapter .cc-line { font-size: calc(var(--u) * 1.9); color: var(--text-2); margin: 0 0 calc(var(--u) * 2.4); letter-spacing: -.01em; }
+  .chapter .cc-projects { display: inline-flex; gap: calc(var(--u) * .8); flex-wrap: wrap; justify-content: center; }
+
+  /* the line diagram */
+  .bigline { position: relative; height: calc(var(--u) * 18); margin: calc(var(--u) * 4) calc(var(--u) * 5) 0; }
+  .bigline .track { position: absolute; left: 0; right: 0; top: calc(var(--u) * 2.2); height: calc(var(--u) * .5); border-radius: 99px; background: rgba(248,250,252,.15); }
+  .bigline .fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--blue), var(--blue-soft)); width: 0; }
+  .bigline .stop { position: absolute; top: 0; transform: translateX(-50%); width: calc(var(--u) * 14); text-align: center; }
+  .bigline .stop i { display: block; margin: calc(var(--u) * 1.1) auto calc(var(--u) * 1.4); width: calc(var(--u) * 2.6); height: calc(var(--u) * 2.6); border-radius: 50%; background: var(--night); border: calc(var(--u) * .4) solid rgba(248,250,252,.35); }
+  .bigline .stop b { display: block; font-family: var(--mono); font-size: calc(var(--u) * .9); color: var(--blue-soft); letter-spacing: .1em; }
+  .bigline .stop strong { display: block; font-size: calc(var(--u) * 2.1); letter-spacing: -.04em; margin: calc(var(--u) * .3) 0 calc(var(--u) * .5); }
+  .bigline .stop span { display: block; font-size: calc(var(--u) * 1.05); color: var(--text-2); line-height: 1.35; }
+  .bigline .bus { position: absolute; top: calc(var(--u) * .9); width: calc(var(--u) * 4.6); height: calc(var(--u) * 3); transform: translateX(-50%); border-radius: calc(var(--u) * .7); background: #fff; box-shadow: 0 0 calc(var(--u) * 2.4) rgba(147,197,253,.9); }
+  .bigline .bus::before { content: ""; position: absolute; left: 10%; right: 10%; top: 20%; height: 34%; background: repeating-linear-gradient(90deg, var(--blue) 0 21%, transparent 21% 33%); }
+
+  /* create */
+  .collage { position: relative; height: calc(var(--u) * 38); }
+  .card { position: absolute; border-radius: calc(var(--u) * 1); background: rgba(15,23,42,.92); border: 1px solid rgba(147,197,253,.25); box-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 5) rgba(0,0,0,.5); overflow: hidden; }
+  .card .hd { font-family: var(--mono); font-size: calc(var(--u) * .7); letter-spacing: .1em; text-transform: uppercase; color: var(--blue-soft); padding: calc(var(--u) * .9) calc(var(--u) * 1.1); border-bottom: 1px solid rgba(147,197,253,.18); display: flex; justify-content: space-between; }
+  .sheet table { border-collapse: collapse; width: 100%; font-family: var(--mono); font-size: calc(var(--u) * .78); }
+  .sheet td, .sheet th { padding: calc(var(--u) * .42) calc(var(--u) * 1.1); text-align: left; border-bottom: 1px solid rgba(248,250,252,.07); }
+  .sheet th { color: var(--muted); font-weight: 400; }
+  .zip ul { list-style: none; margin: 0; padding: calc(var(--u) * .7) calc(var(--u) * 1.1); font-family: var(--mono); font-size: calc(var(--u) * .8); line-height: 2; }
+  .zip li::before { content: "✓"; color: var(--blue-mid); margin-right: calc(var(--u) * .7); }
+  .flow-arrow { position: absolute; font-size: calc(var(--u) * 2.4); color: var(--blue-soft); }
+
+  /* validate */
+  .race { width: calc(var(--u) * 70); margin: calc(var(--u) * 2.6) auto calc(var(--u) * 2.2); text-align: left; }
+  .race .rt { font-family: var(--mono); font-size: calc(var(--u) * .85); color: var(--blue-soft); margin-bottom: calc(var(--u) * 1.6); letter-spacing: .06em; }
+  .lane { display: grid; grid-template-columns: calc(var(--u) * 15) 1fr calc(var(--u) * 9); align-items: center; gap: calc(var(--u) * 1.4); margin-bottom: calc(var(--u) * 1.5); font-size: calc(var(--u) * 1.3); }
+  .lane .tr { height: calc(var(--u) * 2.2); border-radius: 99px; background: rgba(248,250,252,.08); overflow: hidden; }
+  .lane .tr div { height: 100%; width: 0; border-radius: 99px; }
+  .lane b { font-family: var(--mono); font-size: calc(var(--u) * 1.4); text-align: right; font-variant-numeric: tabular-nums; }
+  .speedup { font-weight: 800; font-size: calc(var(--u) * 5.4); letter-spacing: -.05em; }
+  .surfaces { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * .8); margin-bottom: calc(var(--u) * 2); }
+  .surfaces div { padding: calc(var(--u) * .9) calc(var(--u) * 1.1); border-radius: calc(var(--u) * .7); background: rgba(15,23,42,.6); border: 1px solid rgba(147,197,253,.22); font-size: calc(var(--u) * 1.15); }
+  .surfaces div small { display: block; font-family: var(--mono); font-size: calc(var(--u) * .66); color: var(--blue-soft); margin-top: calc(var(--u) * .2); }
+
+  /* track & predict */
+  .features { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * 1.2); }
+  .feature { padding: calc(var(--u) * 1.8) calc(var(--u) * 1.6); border-radius: calc(var(--u) * 1.1); background: rgba(15,23,42,.88); border: 1px solid rgba(147,197,253,.22); }
+  .feature b { display: block; font-size: calc(var(--u) * 1.5); letter-spacing: -.02em; margin-bottom: calc(var(--u) * .6); }
+  .feature span { font-size: calc(var(--u) * 1.05); color: var(--text-2); line-height: 1.45; }
+  .feature .ic { width: calc(var(--u) * 2.6); height: calc(var(--u) * 2.6); border-radius: calc(var(--u) * .7); background: var(--blue); margin-bottom: calc(var(--u) * 1.1); display: grid; place-items: center; font-family: var(--mono); font-weight: 600; font-size: calc(var(--u) * 1); }
+  .pipe { position: relative; display: flex; justify-content: space-between; align-items: center; margin: calc(var(--u) * 4) 0 calc(var(--u) * 3.4); }
+  .pipe .node { position: relative; z-index: 1; width: calc(var(--u) * 13.4); padding: calc(var(--u) * 1.6) calc(var(--u) * 1); border-radius: calc(var(--u) * 1.1); background: rgba(15,23,42,.95); border: 1px solid rgba(147,197,253,.3); }
+  .pipe .node b { display: block; font-size: calc(var(--u) * 1.35); letter-spacing: -.02em; margin-bottom: calc(var(--u) * .5); }
+  .pipe .node span { font-size: calc(var(--u) * .95); color: var(--text-2); line-height: 1.4; display: block; }
+  .pipe .node em { display: block; font-style: normal; font-family: var(--mono); font-size: calc(var(--u) * .7); color: var(--blue-soft); margin-bottom: calc(var(--u) * .7); letter-spacing: .1em; }
+  .pipe .wire { position: absolute; left: calc(var(--u) * 6); right: calc(var(--u) * 6); top: 50%; height: 2px; background: rgba(147,197,253,.35); }
+  .pipe .pkt { position: absolute; top: 50%; width: calc(var(--u) * .9); height: calc(var(--u) * .9); margin: calc(var(--u) * -.45) 0 0 calc(var(--u) * -.45); border-radius: 50%; background: #fff; box-shadow: 0 0 calc(var(--u) * 1) var(--blue-mid); }
+
+  /* understand */
+  table.tt { border-collapse: collapse; font-size: calc(var(--u) * 1.15); margin-bottom: calc(var(--u) * 1.8); width: 100%; }
+  table.tt th { font-family: var(--mono); font-weight: 400; font-size: calc(var(--u) * .7); color: var(--blue-soft); text-transform: uppercase; letter-spacing: .12em; text-align: left; padding: 0 calc(var(--u) * .8) calc(var(--u) * .8) 0; }
+  table.tt td { padding: calc(var(--u) * .55) calc(var(--u) * .8) calc(var(--u) * .55) 0; border-top: 1px solid rgba(248,250,252,.1); font-variant-numeric: tabular-nums; }
+  table.tt td.hl { font-weight: 700; color: #fff; }
+  table.tt td.d { font-family: var(--mono); color: var(--blue-soft); }
+  .punct { width: calc(var(--u) * 46); }
+  .prow { display: grid; grid-template-columns: calc(var(--u) * 4.2) 1fr calc(var(--u) * 7); align-items: center; gap: calc(var(--u) * 1.2); margin-bottom: calc(var(--u) * 1.05); }
+  .prow .rn { height: calc(var(--u) * 2.4); border-radius: calc(var(--u) * .5); background: var(--ink); color: var(--on-light); font-weight: 800; display: grid; place-items: center; font-size: calc(var(--u) * 1.2); }
+  .prow .pb { display: flex; height: calc(var(--u) * 2.4); border-radius: calc(var(--u) * .5); overflow: hidden; background: rgba(248,250,252,.06); }
+  .prow .pb div { height: 100%; width: 0; }
+  .prow b { font-family: var(--mono); font-size: calc(var(--u) * 1.05); text-align: right; }
+  .legend { display: flex; gap: calc(var(--u) * 2); font-size: calc(var(--u) * 1); color: var(--text-2); margin-bottom: calc(var(--u) * 2); }
+  .legend i { display: inline-block; width: calc(var(--u) * .9); height: calc(var(--u) * .9); border-radius: 2px; margin-right: calc(var(--u) * .5); vertical-align: -1px; }
+  .split { display: flex; height: calc(var(--u) * 3.4); border-radius: calc(var(--u) * .6); overflow: hidden; margin-bottom: calc(var(--u) * 1.3); width: calc(var(--u) * 40); }
+  .split div { display: flex; align-items: center; padding: 0 calc(var(--u) * .9); font-family: var(--mono); font-size: calc(var(--u) * .9); font-weight: 600; color: var(--on-light); width: 0; white-space: nowrap; overflow: hidden; }
+  .bars .lane { grid-template-columns: calc(var(--u) * 15) 1fr calc(var(--u) * 7); }
+
+  /* move */
+  .chart { padding: calc(var(--u) * 1.8); border-radius: calc(var(--u) * 1.2); background: rgba(15,23,42,.92); border: 1px solid rgba(147,197,253,.22); }
+  .chart .hd { font-family: var(--mono); font-size: calc(var(--u) * .74); color: var(--blue-soft); letter-spacing: .1em; text-transform: uppercase; margin-bottom: calc(var(--u) * 1.4); }
+  .hours { display: flex; align-items: flex-end; gap: calc(var(--u) * .35); height: calc(var(--u) * 14); }
+  .hours div { flex: 1; background: linear-gradient(180deg, var(--blue-soft), var(--blue)); border-radius: calc(var(--u) * .25) calc(var(--u) * .25) 0 0; height: 0; }
+  .hours-axis { display: flex; justify-content: space-between; font-family: var(--mono); font-size: calc(var(--u) * .66); color: var(--muted); margin-top: calc(var(--u) * .5); }
+  .days { display: flex; gap: calc(var(--u) * .6); margin-top: calc(var(--u) * 1.8); }
+  .days div { flex: 1; text-align: center; padding: calc(var(--u) * .7) 0; border-radius: calc(var(--u) * .6); background: rgba(248,250,252,.06); }
+  .days b { display: block; font-size: calc(var(--u) * 1.3); font-variant-numeric: tabular-nums; }
+  .days span { font-family: var(--mono); font-size: calc(var(--u) * .62); color: var(--muted); }
+  .flow { display: flex; flex-direction: column; gap: calc(var(--u) * 1); }
+  .flow .fs { display: grid; grid-template-columns: calc(var(--u) * 3.4) 1fr; gap: calc(var(--u) * 1.2); align-items: center; padding: calc(var(--u) * 1.2) calc(var(--u) * 1.4); border-radius: calc(var(--u) * 1); background: rgba(15,23,42,.9); border: 1px solid rgba(147,197,253,.22); }
+  .flow .fs i { width: calc(var(--u) * 3.4); height: calc(var(--u) * 3.4); border-radius: calc(var(--u) * .8); background: var(--blue); display: grid; place-items: center; font-style: normal; font-family: var(--mono); font-weight: 600; font-size: calc(var(--u) * 1.1); }
+  .flow .fs b { display: block; font-size: calc(var(--u) * 1.3); letter-spacing: -.02em; }
+  .flow .fs span { font-size: calc(var(--u) * .98); color: var(--text-2); }
+  .slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(var(--u) * .5); margin: calc(var(--u) * .4) calc(var(--u) * .9); }
+  .slots span { text-align: center; padding: calc(var(--u) * .65) 0; border-radius: calc(var(--u) * .6); background: rgba(248,250,252,.07); font-family: var(--mono); font-size: calc(var(--u) * .8); }
+  .slots span.on { background: var(--blue); color: #fff; font-weight: 600; }
+  .ring { position: relative; width: calc(var(--u) * 36); height: calc(var(--u) * 36); margin: 0 auto; }
+  .ring .core { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: calc(var(--u) * 13); height: calc(var(--u) * 13); border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--blue), var(--blue-deep)); display: grid; place-items: center; text-align: center; font-weight: 800; font-size: calc(var(--u) * 1.7); letter-spacing: -.03em; box-shadow: 0 0 calc(var(--u) * 5) rgba(10,92,255,.5); }
+  .ring .mod { position: absolute; transform: translate(-50%, -50%); width: calc(var(--u) * 12); }
+  .ring .mod > div { padding: calc(var(--u) * 1) calc(var(--u) * .8); border-radius: calc(var(--u) * .9); background: rgba(15,23,42,.94); border: 1px solid rgba(147,197,253,.3); text-align: center; font-size: calc(var(--u) * 1.08); font-weight: 600; }
+  .ring svg { position: absolute; inset: 0; }
+
+  /* finale */
+  .city { position: absolute; left: calc(var(--u) * 5); bottom: calc(var(--u) * 12); font-weight: 800; font-size: calc(var(--u) * 7); letter-spacing: -.055em; }
+  .recap { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(var(--u) * .9); margin: calc(var(--u) * 2.4) 0 calc(var(--u) * 1.6); text-align: left; }
+  .recap div { padding: calc(var(--u) * 1.1) calc(var(--u) * 1.2); border-radius: calc(var(--u) * 1); background: rgba(15,23,42,.9); border: 1px solid rgba(147,197,253,.22); }
+  .recap small { font-family: var(--mono); font-size: calc(var(--u) * .64); color: var(--blue-soft); letter-spacing: .12em; text-transform: uppercase; }
+  .recap b { display: block; font-size: calc(var(--u) * 1.4); letter-spacing: -.025em; margin: calc(var(--u) * .4) 0 calc(var(--u) * .3); }
+  .recap span { font-size: calc(var(--u) * .92); color: var(--text-2); line-height: 1.35; display: block; }
+  .qrcard { display: inline-flex; flex-direction: column; align-items: center; gap: calc(var(--u) * .8); padding: calc(var(--u) * 1.2); border-radius: calc(var(--u) * 1.4); background: #fff; color: var(--on-light); box-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 6) rgba(0,0,0,.45); }
+  .qrcard img { width: calc(var(--u) * 15); height: calc(var(--u) * 15); display: block; }
+  .qrcard b { font-size: calc(var(--u) * 1.25); letter-spacing: -.02em; }
+  .qrcard span { font-family: var(--mono); font-size: calc(var(--u) * .7); color: #475569; margin-top: calc(var(--u) * -.6); }
+  .qrs { display: flex; gap: calc(var(--u) * 3); justify-content: center; margin-top: calc(var(--u) * 1); }
+  .mini-game { padding: calc(var(--u) * .8) calc(var(--u) * .9); }
+  .mini-game .tk { display: flex; border-radius: calc(var(--u) * .8); overflow: hidden; background: #fff; color: var(--on-light); margin-bottom: calc(var(--u) * 1.6); }
+  .mini-game .tk b { background: var(--blue); color: #fff; font-size: calc(var(--u) * 2); padding: calc(var(--u) * .5) calc(var(--u) * .9); }
+  .mini-game .tk span { padding: calc(var(--u) * .6) calc(var(--u) * .7); font-size: calc(var(--u) * .78); font-weight: 600; line-height: 1.3; flex: 1; }
+  .mini-game .tk em { font-style: normal; background: var(--blue-deep); color: #fff; padding: calc(var(--u) * .5) calc(var(--u) * .7); font-weight: 800; font-size: calc(var(--u) * 1.3); display: grid; place-items: center; }
+  .mini-game .q { font-size: calc(var(--u) * .9); text-align: center; margin-bottom: calc(var(--u) * .8); color: var(--text-2); }
+  .mini-game .g { text-align: center; font-weight: 800; font-size: calc(var(--u) * 2.2); font-variant-numeric: tabular-nums; margin-bottom: calc(var(--u) * 1.4); }
+  .mini-game .ax { position: relative; height: calc(var(--u) * 1); border-radius: 99px; background: linear-gradient(90deg, #dbeafe, #60a5fa, #0a5cff); opacity: .5; margin: calc(var(--u) * 2.4) 0 calc(var(--u) * 2.2); }
+  .mini-game .mk { position: absolute; top: 50%; width: calc(var(--u) * 2); height: calc(var(--u) * 2); margin: calc(var(--u) * -1) 0 0 calc(var(--u) * -1); border-radius: 50%; }
+  .mini-game .btn { text-align: center; padding: calc(var(--u) * .9) 0; border-radius: 99px; background: var(--blue); font-weight: 700; font-size: calc(var(--u) * .95); }
+</style>
+</head>
+<body>
+<canvas id="map"></canvas>
+<div id="veil"></div>
+<div id="shade"></div>
+<div id="edge"></div>
+<header>
+  <img class="logo" src="../assets/abasis-logo-white.svg" alt="Abasis.AI">
+  <nav id="line"><div class="rail"></div></nav>
+  <div id="clock"></div>
+</header>
+<main id="stage"></main>
+<aside id="qr"><img src="../assets/qr-play.svg" alt="QR code: play Beat the Bus"><div><b>Play Beat the Bus</b><span>Scan with your phone</span></div></aside>
+<footer id="progress"></footer>
+<div id="hint">SPACE pause · ← → scenes · 1–6 chapters · F fullscreen</div>
+
+<script src="../data/network.js"></script>
+<script src="../data/overlays.js"></script>
+<script src="../data/timetable.js"></script>
+<script src="../data/projects.js"></script>
+<script src="../map.js"></script>
+<script>
+(() => {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  const P = new URLSearchParams(location.search);
+  const RENDER = P.has('render');
+  const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+  const fmt = n => Math.round(n).toLocaleString('en-US');
+  const hhmm = s => { const m = Math.round(s / 60); return String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+  const O = window.OVERLAYS, C = window.NETWORK.counts, TT = window.TIMETABLE, CH = window.CHAPTERS;
+  const PR = Object.fromEntries(window.PROJECTS.map(p => [p.id, p]));
+  const MOF = O.places.mof;
+
+  const map = createMap($('#map'), window.NETWORK, { overlays: { kapnos: O.kapnos, limassol: O.limassol } });
+  const GHOST = map.nicosiaShape(MOF);
+
+  // ---------- camera targets (depend on screen aspect, so recomputed on resize) ----------
+  let CAM = {};
+  function computeCams() {
+    const right = { left: .5, right: .95, top: .17, bottom: .86 };
+    const b = map.bounds;
+    CAM = {
+      island: map.fit(b.island, { left: .04, right: .96, top: .14, bottom: .9 }),
+      islandRight: map.fit(b.island, { left: .38, right: .98, top: .2, bottom: .88 }),
+      islandWide: map.fit(b.island, { left: .3, right: 1.02, top: .12, bottom: .92 }),
+      mof: map.point(MOF.x, MOF.y, 820, { fx: .7, fy: .52 }),
+      nicosia: map.fit(b.Nicosia, right),
+      nicosiaWide: map.fit(b.Nicosia, { left: .25, right: .98, top: .12, bottom: .92 }),
+      limassol: map.fit(b.Limassol, { left: .3, right: .98, top: .14, bottom: .9 }),
+      kapnos: map.fit(map.feeds.kapnos.bounds, { left: .5, right: .93, top: .2, bottom: .84 }),
+      shuttle: map.fit(map.feeds.limassol.bounds, { left: .5, right: .93, top: .24, bottom: .8 }),
+      school: map.fit(map.schoolBounds(), { left: .48, right: .76, top: .2, bottom: .84 }),
+      ghost: map.fit(map.lineBounds(GHOST), { left: .52, right: .94, top: .2, bottom: .84 }),
+      Nicosia: map.fit(b.Nicosia, { left: .25, right: .97, top: .14, bottom: .9 }),
+      Larnaca: map.fit(b.Larnaca, { left: .25, right: .97, top: .14, bottom: .9 }),
+      Paphos: map.fit(b.Paphos, { left: .25, right: .97, top: .14, bottom: .9 }),
+      Famagusta: map.fit(b.Famagusta, { left: .25, right: .97, top: .14, bottom: .9 }),
+      Limassol: map.fit(b.Limassol, { left: .25, right: .97, top: .14, bottom: .9 })
+    };
+  }
+  computeCams();
+
+  // ---------- reusable markup ----------
+  const steps = (list, start, gap = 650) => `<ol class="steps">${list.map((s, i) => `<li data-in="${start + i * gap}">${s}</li>`).join('')}</ol>`;
+  const stats = (list, at) => `<div class="stats" data-in="${at}">${list.map(([v, l]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
+  const kick = (text, at = 200) => `<div class="kicker" data-in="${at}">${text}</div>`;
+  const browser = (url, inner, at = 600, fx = 'tilt') => `<div class="browser" data-in="${at}" data-fx="${fx}"><div class="bar"><i></i><i></i><i></i><span>${url}</span></div><div class="view">${inner}</div></div>`;
+  const chapterCard = (i, projects) => ({
+    id: CH[i].id + '-card', ch: i, dur: 8000, veil: 0, shade: .55, speed: .6,
+    html: `<div class="center chapter">
+      <div class="cc-num" data-in="100" data-fx="scale">${CH[i].n}</div>
+      <div class="cc-title" data-in="350">${CH[i].title}</div>
+      <p class="cc-line" data-in="900">${CH[i].line}</p>
+      <div class="cc-projects" data-in="1500">${projects.map(p => `<span class="pill">${p}</span>`).join('')}</div>
+    </div>`
+  });
+
+  // kapnos mini map as inline SVG (real route shapes)
+  const kapnosSvg = (() => {
+    const b = map.feeds.kapnos.bounds, pad = 120, w = b[2] - b[0] + pad * 2, h = b[3] - b[1] + pad * 2;
+    const lines = O.kapnos.lines.map(l => { let d = ''; for (let i = 0; i < l.p.length; i += 2) d += (i ? 'L' : 'M') + (l.p[i] - b[0] + pad) + ' ' + (l.p[i + 1] - b[1] + pad); return `<path d="${d}"/>`; }).join('');
+    const stops = O.kapnos.stops.map(s => `<circle cx="${s.x - b[0] + pad}" cy="${s.y - b[1] + pad}" r="52"/>`).join('');
+    return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;display:block"><g fill="none" stroke="#93c5fd" stroke-width="40" stroke-linecap="round" stroke-linejoin="round" opacity=".9">${lines}</g><g fill="#0a5cff" stroke="#fff" stroke-width="14">${stops}</g></svg>`;
+  })();
+  const kSample = O.kapnos.sample.departures.filter(r => r.dep >= '07:00').slice(0, 7);
+
+  // route 11 at Ministry of Finance: published vs typical observed (real data)
+  const ttRows = TT.rows.filter(r => r.route_short_name === '11' && r.sufficient_history && r.scheduled_seconds >= 6 * 3600).slice(0, 7);
+  const sign = m => (m < 0 ? '−' : '+') + Math.abs(m).toFixed(1);
+  const punct = [...O.punctuality.routes].sort((a, b) => b.within - a.within);
+  const bike = O.bikestat, hmax = Math.max(...bike.hourly);
+
+  // ---------- the show ----------
+  const SCENES = [
+    { id: 'open', ch: -1, dur: 15000, veil: 1, shade: 0, cam: [[0, 'prev'], [2200, 'islandRight']],
+      map: t => ({ reveal: clamp(t / 7000), busAlpha: clamp((t - 6500) / 1500) }),
+      html: `<div class="col-left">
+        ${kick('Abasis.AI · Mobility Lab · Nicosia', 300)}
+        <h1 data-in="600">Cyprus<br>in <em>motion.</em></h1>
+        <p class="lede" data-in="1500">We build the data tools that make public transport easier to plan, check and trust.</p>
+        <div class="stats" data-in="2400">
+          <div class="stat"><b data-count="${C.routes}" data-at="2400">0</b><span>bus routes</span></div>
+          <div class="stat"><b data-count="${C.stops}" data-at="2400">0</b><span>stops</span></div>
+          <div class="stat"><b data-count="${C.trips}" data-at="2400">0</b><span>scheduled trips</span></div>
+        </div>
+        <div class="note" data-in="4200">Every line on this map is a real route shape from the public GTFS feeds of Cyprus’s 7 bus operators.</div>
+      </div>` },
+
+    { id: 'archive', ch: -1, dur: 13000, veil: 1, shade: 0, speed: 5, cam: [[0, 'prev'], [11000, 'islandWide']],
+      html: `<div class="col-left">
+        ${kick('The archive · since 21 July 2026')}
+        <div class="mega" data-in="400"><span data-count="51698134" data-at="600" data-dur="5200">0</span></div>
+        <div class="mega-sub" data-in="700">bus GPS positions recorded</div>
+        <p class="lede" data-in="1600">Every public bus in Cyprus, every 30 seconds. From those points we rebuild what actually happened at each stop.</p>
+        ${stats([['11.9M', 'stop passages'], ['98', 'service days'], ['7', 'operators']], 2600)}
+      </div>` },
+
+    { id: 'truth', ch: -1, dur: 16000, veil: 1, shade: 0, speed: .6, cam: [[0, 'prev'], [3400, 'mof']],
+      map: t => ({ focus: 'Nicosia', pulse: { x: MOF.x, y: MOF.y, alpha: clamp((t - 2000) / 800) },
+        labels: [{ x: MOF.x, y: MOF.y, text: 'Ministry of Finance stop', size: 16, dx: 22, alpha: clamp((t - 2800) / 700) }] }),
+      html: `<div class="col-left">
+        ${kick('One stop · eight Mondays')}
+        <h2 data-in="400">The timetable says 07:00.<br><em>The bus says…</em></h2>
+        <p class="lede" data-in="1400">Ministry of Finance, Nicosia: 1,174 GPS-observed passages compared with the published times.</p>
+        <div class="split" data-in="3000"><div data-bar="${O.punctuality.overall.within}" data-at="3200" style="background:var(--blue);color:#fff">${Math.round(O.punctuality.overall.within)}% on time</div><div data-bar="${O.punctuality.overall.late}" data-at="3500" style="background:var(--blue-soft)">${Math.round(O.punctuality.overall.late)}% late</div><div data-bar="${O.punctuality.overall.early}" data-at="3800" style="background:var(--blue-pale)">${Math.round(O.punctuality.overall.early)}%</div></div>
+        <div class="legend" data-in="3600"><span><i style="background:var(--blue)"></i>−1 to +5 min</span><span><i style="background:var(--blue-soft)"></i>over 5 min late</span><span><i style="background:var(--blue-pale)"></i>over 1 min early</span></div>
+        <div class="note" data-in="4600">Median delay ${O.punctuality.overall.median.toFixed(1)} min · Sept 7 – Oct 26, 2026 · GPS passages are not boarding records</div>
+      </div>` },
+
+    { id: 'line', ch: -1, dur: 12500, veil: 0, shade: .62, speed: .8, cam: [[0, 'prev'], [3000, 'island']],
+      html: `<div class="center">
+        ${kick('How we work', 200)}
+        <h2 data-in="400">Six stops. <em>One line.</em></h2>
+        <div class="bigline" data-in="900">
+          <div class="track"><div class="fill"></div></div>
+          ${CH.map((c, i) => `<div class="stop" style="left:${i * 20}%"><i></i><b>${c.n}</b><strong>${c.title}</strong><span>${['Spreadsheet → standard feed', 'Errors caught before riders see them', 'Live buses from a phone', 'Fill the GPS gaps', 'What really happens', 'Cars, bikes, exams & AI'][i]}</span></div>`).join('')}
+          <div class="bus"></div>
+        </div>
+      </div>`,
+      update(t, root) {
+        const k = ease(clamp((t - 1700) / 8600));
+        root.querySelector('.bigline .bus').style.left = (k * 100) + '%';
+        root.querySelector('.bigline .fill').style.width = (k * 100) + '%';
+        root.querySelectorAll('.bigline .stop i').forEach((el, i) => {
+          const lit = k * 5 >= i - .02;
+          el.style.background = lit ? 'var(--blue)' : 'var(--night)';
+          el.style.borderColor = lit ? 'var(--blue-soft)' : 'rgba(248,250,252,.35)';
+        });
+      } },
+
+    // 01 CREATE
+    chapterCard(0, ['GTFS Web Editor', 'Kapnos Airport Shuttle', 'Limassol Airport Express']),
+    { id: 'kapnos-how', ch: 0, dur: 13500, veil: 1, shade: .2, speed: .6, cam: [[0, 'prev'], [4000, 'kapnos']],
+      map: () => ({ dim: .45, busAlpha: .3 }),
+      html: `<div class="col-left">
+        ${kick('Create · GTFS Web Editor')}
+        <h2 data-in="400">From spreadsheet<br>to <em>standard feed.</em></h2>
+        <p class="lede" data-in="1100">${PR.kapnos.problem}</p>
+        ${steps(PR.kapnos.steps, 2200)}
+      </div>
+      <div class="col-right"><div class="collage">
+        <div class="card sheet" data-in="1400" data-fx="left" style="left:0;top:0;width:calc(var(--u)*21)">
+          <div class="hd"><span>R1 · Nicosia → Larnaca Airport</span><span>Mon 6 Jul</span></div>
+          <table><tr><th>depart</th><th>arrive</th><th>stop</th></tr>${kSample.map(r => `<tr><td>${r.dep}</td><td>${r.arr}</td><td>LCA</td></tr>`).join('')}</table>
+        </div>
+        <div class="flow-arrow" data-in="2600" style="left:calc(var(--u)*22.4);top:calc(var(--u)*8)">→</div>
+        <div class="card" data-in="2900" data-fx="scale" style="right:0;top:calc(var(--u)*3);width:calc(var(--u)*23)">
+          <div class="hd"><span>Map editor</span><span>4 routes · 12 stops</span></div>
+          <div style="padding:calc(var(--u)*1)">${kapnosSvg}</div>
+        </div>
+        <div class="flow-arrow" data-in="4200" style="left:calc(var(--u)*20);top:calc(var(--u)*25)">↙</div>
+        <div class="card zip" data-in="4500" data-fx="up" style="left:calc(var(--u)*4);top:calc(var(--u)*24);width:calc(var(--u)*17)">
+          <div class="hd"><span>kapnos_gtfs.zip</span><span>✓ valid</span></div>
+          <ul>${['agency.txt', 'stops.txt', 'routes.txt', 'trips.txt', 'stop_times.txt', 'shapes.txt'].map((f, i) => `<li data-in="${4900 + i * 260}">${f}</li>`).join('')}</ul>
+        </div>
+      </div></div>` },
+    { id: 'editor-clip', ch: 0, dur: 28500, veil: 1, shade: .35, speed: .5, cam: [[0, 'prev'], [3000, 'islandWide']],
+      map: () => ({ dim: .6 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*36)">
+        ${kick('Create · GTFS Web Editor')}
+        <h2 data-in="400">Edit on a map. <em>Check before you publish.</em></h2>
+        <ol class="steps"><li data-in="3100">Every route and stop on a real map</li><li data-in="5000">Edit, reshape or clone a route in two clicks</li><li data-in="12300">Weekly timetables — one tick per day</li><li data-in="23600">A health check before export: 0 errors, 0 warnings</li></ol>
+      </div>
+      <div class="col-right" style="width:calc(var(--u)*52)">
+        ${browser('Transit Editor', `<video data-clip data-at="900" muted playsinline preload="auto" src="../media/gtfs-editor.mp4"></video>`, 600)}
+        <div class="caption" data-in="1500">Real capture: the editor with the Kapnos Airport Shuttle routes</div>
+      </div>` },
+    { id: 'kapnos-map', ch: 0, dur: 15000, veil: 1, shade: 0, speed: .6, cam: [[0, 'prev'], [2500, 'kapnos']],
+      map: t => ({ dim: .55, busAlpha: .25, feeds: [{ key: 'kapnos', progress: clamp((t - 900) / 4500), leftLabels: [] }] }),
+      html: `<div class="col-left">
+        ${kick('Create · Kapnos Airport Shuttle')}
+        <h2 data-in="400">Four airport routes, <em>ready for map apps.</em></h2>
+        <p class="lede" data-in="1200">Nicosia, Larnaca and Paphos airports, Ayia Napa and Protaras — every trip and every road-following shape in one standard feed.</p>
+        <div class="stats" data-in="2200">
+          <div class="stat"><b data-count="12" data-at="2200">0</b><span>stops</span></div>
+          <div class="stat"><b data-count="5955" data-at="2200">0</b><span>trips</span></div>
+          <div class="stat"><b data-count="16076" data-at="2200">0</b><span>stop times</span></div>
+        </div>
+        <div class="note" data-in="3600">${PR.kapnos.note}</div>
+      </div>` },
+    { id: 'limassol', ch: 0, dur: 13500, veil: 1, shade: 0, speed: .6, cam: [[0, 'prev'], [2600, 'shuttle']],
+      map: t => ({ dim: .55, busAlpha: .25, feeds: [{ key: 'limassol', progress: clamp((t - 900) / 3800), leftLabels: ['Limassol', 'Larnaca Airport'] }] }),
+      html: `<div class="col-left">
+        ${kick('Create · Limassol Airport Express')}
+        <h2 data-in="400">Two airport shuttles, <em>routes, shapes and fares.</em></h2>
+        <p class="lede" data-in="1200">${PR.limassol.one}</p>
+        ${stats(PR.limassol.numbers, 2300)}
+        <span class="pill" data-in="3300">${PR.limassol.status}</span>
+      </div>` },
+
+    // 02 VALIDATE
+    chapterCard(1, ['GTFS Guru · gtfs.guru']),
+    { id: 'guru-clip', ch: 1, dur: 27500, veil: 1, shade: .35, speed: .5, cam: [[0, 'prev'], [3000, 'islandWide']],
+      map: () => ({ dim: .6 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*36)">
+        ${kick('Validate · GTFS Guru')}
+        <h2 data-in="400">Drop a feed.<br><em>Know what to fix.</em></h2>
+        ${steps(['Runs in the browser — a file you pick never leaves your device', '110 checks name the file, row and field of every issue', 'Every finding links to how to fix it', 'Free and live at gtfs.guru'], 3000, 4200)}
+        <span class="pill" data-in="19000">${PR.guru.status}</span>
+      </div>
+      <div class="col-right" style="width:calc(var(--u)*52)">
+        ${browser('gtfs.guru', `<video data-clip data-at="900" muted playsinline preload="auto" src="../media/gtfs-guru.mp4"></video>`, 600)}
+        <div class="caption" data-in="1500">Real capture: gtfs.guru validating its demo feed in the browser</div>
+      </div>` },
+    { id: 'guru-race', ch: 1, dur: 16500, veil: 0, shade: .7, speed: .5, cam: [[0, 'prev'], [3000, 'island']],
+      html: `<div class="center">
+        ${kick('Validate · GTFS Guru')}
+        <h2 data-in="400">Built for <em>big feeds.</em></h2>
+        <div class="race" data-in="900">
+          <div class="rt">Netherlands national feed · 16.0 million stop-time rows · replay at 5× speed</div>
+          <div class="lane"><span>GTFS Guru</span><div class="tr"><div class="g" style="background:linear-gradient(90deg,var(--blue),var(--blue-soft))"></div></div><b class="gt">0.00 s</b></div>
+          <div class="lane"><span>Java validator 8.0.1</span><div class="tr"><div class="j" style="background:var(--muted)"></div></div><b class="jt">0.00 s</b></div>
+        </div>
+        <div class="speedup" style="opacity:0"><span class="em">6.7×</span> faster</div>
+        <div class="note" data-in="1200">${PR.guru.note.replace('*', '')}</div>
+      </div>`,
+      update(t, root) {
+        const s = Math.max(0, (t - 1700) / 1000 * 5), g = Math.min(s, 9.75), j = Math.min(s, 65.18);
+        root.querySelector('.g').style.width = (g / 65.18 * 100) + '%';
+        root.querySelector('.j').style.width = (j / 65.18 * 100) + '%';
+        root.querySelector('.gt').textContent = g.toFixed(2) + ' s' + (s >= 9.75 ? ' ✓' : '');
+        root.querySelector('.jt').textContent = j.toFixed(2) + ' s' + (s >= 65.18 ? ' ✓' : '');
+        const sp = root.querySelector('.speedup'), k = easeOut(clamp((s - 9.75) / 4));
+        sp.style.opacity = k * (1 - clamp((t - 15800) / 500)); sp.style.transform = `scale(${.9 + .1 * k})`;
+      } },
+    { id: 'guru-everywhere', ch: 1, dur: 14500, veil: 1, shade: .3, speed: .5, cam: [[0, 'prev'], [3000, 'islandWide']],
+      map: () => ({ dim: .6 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*37)">
+        ${kick('Validate · GTFS Guru')}
+        <h2 data-in="400">One engine. <em>Everywhere.</em></h2>
+        <div class="surfaces">${[['Browser', 'WebAssembly, local files'], ['Desktop app', 'drag & drop'], ['Command line', 'with --fix and diff'], ['Python', 'pip package'], ['Web API', 'for platforms'], ['CI / GitHub Action', 'SARIF reports'], ['MCP server', 'for AI assistants'], ['Open source', 'Apache-2.0']].map(([a, b], i) => `<div data-in="${1100 + i * 380}">${a}<small>${b}</small></div>`).join('')}</div>
+      </div>
+      <div class="col-right" style="width:calc(var(--u)*50);height:calc(var(--u)*40)">
+        <div class="browser" data-in="900" data-fx="tilt" style="position:absolute;right:calc(var(--u)*14);top:0;width:calc(var(--u)*32)"><div class="bar"><i></i><i></i><i></i><span>GTFS Guru · desktop</span></div><div class="view" style="aspect-ratio:1080/1020"><img data-kb="in" src="../media/guru-desktop.jpg" alt=""></div></div>
+        <div class="browser" data-in="2600" data-fx="tilt" style="position:absolute;right:0;top:calc(var(--u)*17);width:calc(var(--u)*38)"><div class="bar"><i></i><i></i><i></i><span>AI assistant · gtfs-guru MCP</span></div><div class="view" style="aspect-ratio:1848/900"><img data-kb="out" src="../media/guru-mcp.jpg" alt=""></div></div>
+      </div>` },
+
+    // 03 TRACK
+    chapterCard(2, ['School Bus Tracker']),
+    { id: 'school-how', ch: 2, dur: 17000, veil: 1, shade: 0, speed: 1, cam: [[0, 'prev'], [2800, 'school']],
+      map: t => ({ focus: 'Limassol', busAlpha: .25, dim: .2, school: { alpha: clamp((t - 1200) / 1000) } }),
+      html: `<div class="col-left" style="width:calc(var(--u)*37)">
+        ${kick('Track · School Bus Tracker')}
+        <h2 data-in="400">Start with the <em>driver’s phone.</em></h2>
+        ${steps(PR.schoolbus.steps, 1500, 900)}
+        <span class="chip" data-in="5200">Simulated buses on real Limassol routes</span>
+      </div>
+      <div class="phone" data-in="900" data-fx="up" style="right:calc(var(--u)*5);top:calc(var(--u)*9.5)">
+        <div class="ph-top">DRIVER APP</div>
+        <div class="ph-card"><small>Vehicle</small><b>Bus 3</b></div>
+        <div class="ph-card"><small>Route</small><b>Morning run · 14 stops</b></div>
+        <div class="ph-go">● Trip in progress</div>
+        <div class="ph-log"></div>
+      </div>`,
+      update(t, root) {
+        const n = Math.floor(t / 1500), lines = [];
+        for (let k = n; k > n - 7 && k >= 0; k--) { const s = 7 * 3600 + 41 * 60 + k * 5; lines.push(`${hhmm(s)}:${String(s % 60).padStart(2, '0')}  position sent ✓`); }
+        root.querySelector('.ph-log').textContent = lines.join('\n');
+      } },
+    { id: 'school-next', ch: 2, dur: 13500, veil: 1, shade: .3, speed: 1, cam: [[0, 'prev'], [3000, 'limassol']],
+      map: t => ({ focus: 'Limassol', busAlpha: .3, dim: .35, school: { alpha: .7 } }),
+      html: `<div class="col-left" style="width:calc(var(--u)*36)">
+        ${kick('Track · what comes next')}
+        <h2 data-in="400">Next stop: <em>parents.</em></h2>
+        <p class="lede" data-in="1200">A parent sees only their child’s bus — and nothing else.</p>
+        <span class="pill" data-in="2200">${PR.schoolbus.status}</span>
+        <div class="note" data-in="2800">${PR.schoolbus.note}</div>
+      </div>
+      <div class="col-right" style="width:calc(var(--u)*44)"><div class="features">
+        ${PR.schoolbus.next.map((f, i) => `<div class="feature" data-in="${1400 + i * 500}" data-fx="scale"><div class="ic">${i + 1}</div><b>${f}</b><span>${['Route-scoped access for each family', 'Exact school locations stay protected', 'History is kept only as long as needed', 'Start small, measure, then scale'][i]}</span></div>`).join('')}
+      </div></div>` },
+
+    // 04 PREDICT
+    chapterCard(3, ['Shadow GTFS-RT API']),
+    { id: 'ghost', ch: 3, dur: 16500, veil: 1, shade: 0, speed: .25, cam: [[0, 'prev'], [3000, 'ghost']],
+      map: t => ({ focus: 'Nicosia', busAlpha: .2, dim: .15, ghost: { si: GHOST, phase: clamp((t - 1800) / 13000), alpha: clamp((t - 1000) / 800) } }),
+      html: `<div class="col-left" style="width:calc(var(--u)*37)">
+        ${kick('Predict · Shadow GTFS-RT API')}
+        <h2 data-in="400">When the GPS goes quiet, <em>the bus stays on the map.</em></h2>
+        <p class="lede" data-in="1300">${PR.shadow.one}</p>
+        <div class="legend" data-in="2400"><span><i style="background:#fff;border-radius:50%"></i>measured GPS</span><span><i style="background:var(--blue-mid);border-radius:50%"></i>model estimate</span></div>
+        <span class="pill" data-in="3200">${PR.shadow.status}</span>
+      </div>` },
+    { id: 'pipeline', ch: 3, dur: 15500, veil: 0, shade: .72, speed: .5, cam: [[0, 'prev'], [3000, 'island']],
+      html: `<div class="center">
+        ${kick('Predict · how it works')}
+        <h2 data-in="400">From raw feeds to <em>a feed you can trust.</em></h2>
+        <div class="pipe">
+          <div class="wire" data-in="900"></div>
+          ${[['input', 'Live feeds', '7 Cyprus operators'], ['every 30 s', 'Collector', 'archives every snapshot'], ['learned', 'CatBoost model', 'hour, day, stop, slope'], ['on the road', 'Kalman filter', 'keeps the estimate on the route'], ['output', 'GTFS-Realtime', 'labelled estimates for any app']].map(([e, b, s], i) => `<div class="node" data-in="${1100 + i * 600}" data-fx="scale"><em>${e}</em><b>${b}</b><span>${s}</span></div>`).join('')}
+          ${[0, 1, 2, 3, 4, 5].map(() => '<div class="pkt"></div>').join('')}
+        </div>
+        ${stats([['51.7M', 'GPS positions'], ['30 s', 'polling'], ['7', 'operators']], 4400)}
+        <div class="note" data-in="5000">Predicted positions are inferred, never presented as measured GPS.</div>
+      </div>`,
+      update(t, root) {
+        root.querySelectorAll('.pipe .pkt').forEach((el, i) => {
+          const k = ((t / 3200) + i / 6) % 1, a = clamp((t - 4000) / 800);
+          el.style.left = (6 + k * 88) + '%'; el.style.opacity = a * Math.sin(k * Math.PI);
+        });
+      } },
+
+    // 05 UNDERSTAND
+    chapterCard(4, ['Observed & predicted timetables']),
+    { id: 'timetable', ch: 4, dur: 17500, veil: 1, shade: .35, speed: .5, cam: [[0, 'prev'], [3000, 'nicosiaWide']],
+      map: () => ({ focus: 'Nicosia', dim: .45 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*40)">
+        ${kick('Understand · observed timetables')}
+        <h2 data-in="400">Planned vs. <em>what really happens.</em></h2>
+        <p class="lede" data-in="1100" style="margin-bottom:calc(var(--u)*1.6)">Route 11 at the Ministry of Finance stop, typical Monday morning:</p>
+        <table class="tt" data-in="1900"><tr><th>Timetable</th><th>Typical</th><th>Usual range</th><th>Δ min</th></tr>
+          ${ttRows.map((r, i) => `<tr data-in="${2200 + i * 380}"><td>${hhmm(r.scheduled_seconds)}</td><td class="hl">${hhmm(r.median_seconds)}</td><td>${hhmm(r.p10_seconds)}–${hhmm(r.p90_seconds)}</td><td class="d">${sign((r.median_seconds - r.scheduled_seconds) / 60)}</td></tr>`).join('')}
+        </table>
+        <div class="note" data-in="5200">Typical = median of GPS-observed passages over eight autumn Mondays · range = 10th–90th percentile.</div>
+      </div>
+      <div class="col-right" style="width:calc(var(--u)*26.5);right:calc(var(--u)*10);top:47%">
+        <div class="paper" data-in="1000" data-fx="tilt"><img data-kb="in" src="../media/timetable-pdf-1.jpg" alt=""></div>
+        <div class="caption" data-in="1800">Printable stop timetable generated from the data</div>
+      </div>` },
+    { id: 'punctuality', ch: 4, dur: 16500, veil: 1, shade: .35, speed: .5, cam: [[0, 'prev'], [3000, 'nicosiaWide']],
+      map: () => ({ focus: 'Nicosia', dim: .5, pulse: { x: MOF.x, y: MOF.y, alpha: .8 } }),
+      html: `<div class="col-left" style="width:calc(var(--u)*34)">
+        ${kick('Understand · route by route')}
+        <h2 data-in="400">Same stop. <em>Seven different stories.</em></h2>
+        <p class="lede" data-in="1200">Route 2 passes more than a minute early ${Math.round(punct.find(r => r.route === '2').early)}% of the time — riders who arrive on schedule can miss it.</p>
+        <div class="legend" data-in="2000"><span><i style="background:var(--blue-pale)"></i>early</span><span><i style="background:var(--blue)"></i>on time</span><span><i style="background:var(--blue-soft)"></i>late</span></div>
+      </div>
+      <div class="col-right punct" style="width:calc(var(--u)*46)">
+        ${punct.map((r, i) => `<div class="prow" data-in="${1000 + i * 300}"><div class="rn">${r.route}</div><div class="pb"><div data-bar="${r.early}" data-at="${1300 + i * 300}" style="background:var(--blue-pale)"></div><div data-bar="${r.within}" data-at="${1300 + i * 300}" style="background:var(--blue)"></div><div data-bar="${r.late}" data-at="${1300 + i * 300}" style="background:var(--blue-soft)"></div></div><b>${Math.round(r.within)}% on time</b></div>`).join('')}
+        <div class="note" data-in="3800">Ministry of Finance, Nicosia · ${O.punctuality.overall.records.toLocaleString('en-US')} observed passages on eight autumn Mondays</div>
+      </div>` },
+    { id: 'results', ch: 4, dur: 15500, veil: 1, shade: .25, speed: 1.4, cam: [[0, 'prev'], [5000, 'islandWide']],
+      html: `<div class="col-left" style="width:calc(var(--u)*44)">
+        ${kick('Understand · measured results')}
+        <div class="mega" data-in="400"><span class="em">−<span data-count="25.7" data-dec="1" data-at="700" data-dur="2400">0</span>%</span></div>
+        <div class="mega-sub" data-in="700">arrival error vs the published timetable</div>
+        <div class="bars" data-in="1500">
+          <div class="lane"><span>Published timetable</span><div class="tr"><div data-bar="100" data-at="1700" style="background:var(--muted)"></div></div><b>4.94 min</b></div>
+          <div class="lane"><span>Historical median</span><div class="tr"><div data-bar="75.2" data-at="2000" style="background:var(--blue-mid)"></div></div><b>3.71 min</b></div>
+          <div class="lane"><span>Our CatBoost model</span><div class="tr"><div data-bar="74.3" data-at="2300" style="background:var(--blue)"></div></div><b>3.67 min</b></div>
+        </div>
+        ${stats([['260k', 'held-out test arrivals'], ['82%', 'inside the p10–p90 band']], 3200)}
+        <div class="note" data-in="4000">${PR.timetable.note}</div>
+      </div>` },
+
+    // 06 MOVE
+    chapterCard(5, ['Cyprus Motorist Hub', 'BikeStat', 'BusRider', 'ExamRide', 'Zelo', 'CyTransit AI']),
+    { id: 'motorist', ch: 5, dur: 36500, veil: 1, shade: .3, speed: .8, cam: [[0, 'prev'], [3000, 'islandWide']],
+      map: () => ({ dim: .6 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*35)">
+        ${kick('Move · Cyprus Motorist Hub')}
+        <h2 data-in="400">Everything a driver must <em>remember, check and do.</em></h2>
+        <ol class="steps"><li data-in="2600">${PR.motorist.steps[0]}</li><li data-in="8200">${PR.motorist.steps[1]}</li><li data-in="19200">${PR.motorist.steps[2]}</li><li data-in="28600">${PR.motorist.steps[3]}</li></ol>
+        ${stats(PR.motorist.numbers, 31000)}
+      </div>
+      <div class="col-right" style="width:calc(var(--u)*52)">
+        ${browser('Cyprus Motorist Hub · demo mode', `<video data-clip data-at="900" muted playsinline preload="auto" src="../media/motorist-hub.mp4"></video>`, 600)}
+        <div class="caption" data-in="1500">Real capture · deployable MVP · demo data is synthetic</div>
+      </div>` },
+    { id: 'bikestat', ch: 5, dur: 16000, veil: 1, shade: .3, speed: .8, cam: [[0, 'prev'], [3000, 'Limassol']],
+      map: () => ({ dim: .55 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*36)">
+        ${kick('Move · BikeStat')}
+        <h2 data-in="400">Shared bikes, <em>minute by minute.</em></h2>
+        <p class="lede" data-in="1200">${PR.bikestat.one}</p>
+        ${stats(PR.bikestat.numbers, 2200)}
+        <div class="note" data-in="3000">${PR.bikestat.note}</div>
+      </div>
+      <div class="col-right" style="width:calc(var(--u)*46)">
+        <div class="chart" data-in="900" data-fx="scale">
+          <div class="hd">Estimated rentals by hour of day · Nextbike Cyprus, 15–24 June 2026</div>
+          <div class="hours">${bike.hourly.map((v, i) => `<div data-hbar="${(v / hmax * 100).toFixed(1)}" data-at="${1400 + i * 70}"></div>`).join('')}</div>
+          <div class="hours-axis"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>
+          <div class="days">${bike.daily.map((d, i) => `<div data-in="${3200 + i * 180}"><b>${d.rentals}</b><span>${d.day.split(' ')[0]}</span></div>`).join('')}</div>
+        </div>
+      </div>` },
+    { id: 'bikestat-clip', ch: 5, dur: 26500, veil: 1, shade: .35, speed: .8, cam: [[0, 'prev'], [3000, 'islandWide']],
+      map: () => ({ dim: .6 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*35)">
+        ${kick('Move · BikeStat')}
+        <h2 data-in="400">The dashboard behind <em>the numbers.</em></h2>
+        <ol class="steps"><li data-in="3900">Rentals per day and per hour</li><li data-in="10500">Pickups by city and the busiest stations</li><li data-in="16200">Where bikes are picked up, on a map</li></ol>
+        <div class="note" data-in="18000">${PR.bikestat.note}</div>
+      </div>
+      <div class="col-right" style="width:calc(var(--u)*52)">
+        ${browser('BikeStat · Nextbike Cyprus rentals', `<video data-clip data-at="900" muted playsinline preload="auto" src="../media/bikestat.mp4"></video>`, 600)}
+        <div class="caption" data-in="1500">Real capture: dashboard built from the open Nextbike Cyprus feed</div>
+      </div>` },
+    { id: 'exam', ch: 5, dur: 15500, veil: 1, shade: .3, speed: .8, cam: [[0, 'prev'], [3000, 'islandWide']],
+      map: () => ({ dim: .55 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*36)">
+        ${kick('Move · BusRider & ExamRide')}
+        <h2 data-in="400">The bus to your exam, <em>booked in a minute.</em></h2>
+        <p class="lede" data-in="1200">${PR.busrider.problem}</p>
+        <span class="pill" data-in="2400">BusRider · ${PR.busrider.status}</span><span class="pill" data-in="2700">ExamRide · ${PR.examride.status}</span>
+      </div>
+      <div class="col-right" style="width:calc(var(--u)*42)"><div class="flow">
+        ${PR.busrider.steps.map((s, i) => `<div class="fs" data-in="${1100 + i * 800}" data-fx="left"><i>${i + 1}</i><div><b>${['Pick your exam', 'Your pickup point', 'Pay securely', 'Routes plan themselves'][i]}</b><span>${s}</span></div></div>`).join('')}
+      </div></div>` },
+    { id: 'zelo', ch: 5, dur: 14500, veil: 1, shade: .3, speed: .8, cam: [[0, 'prev'], [3000, 'islandWide']],
+      map: () => ({ dim: .55 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*36)">
+        ${kick('Move · Zelo e-bikes')}
+        <h2 data-in="400">Rent an e-bike <em>from your phone.</em></h2>
+        ${steps(PR.zelo.steps, 1300, 800)}
+        <span class="pill" data-in="4800">${PR.zelo.status}</span>
+      </div>
+      <div class="phone" data-in="900" data-fx="up" style="right:calc(var(--u)*14);top:calc(var(--u)*9.5)">
+        <div class="tag-illus">ILLUSTRATION OF THE BOOKING FLOW</div>
+        <div class="ph-top">BOOK A PICKUP</div>
+        <div class="ph-card"><small>Identity</small><b>Verified ✓</b></div>
+        <div class="ph-card"><small>Pickup · today</small><b>Choose a 30-min slot</b></div>
+        <div class="slots">${['10:00', '10:30', '11:00', '11:30', '12:00', '12:30'].map((s, i) => `<span class="${i === 3 ? 'on' : ''}">${s}</span>`).join('')}</div>
+        <div class="ph-card"><small>Wallet</small><b>Top up with Stripe</b></div>
+        <div class="ph-go">Book slot</div>
+      </div>` },
+    { id: 'cytransit', ch: 5, dur: 13500, veil: 1, shade: .35, speed: .8, cam: [[0, 'prev'], [3000, 'islandWide']],
+      map: () => ({ dim: .6 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*34)">
+        ${kick('Move · CyTransit AI')}
+        <h2 data-in="400">Where we’re <em>heading next.</em></h2>
+        <p class="lede" data-in="1200">${PR.cytransit.one} Six modules, from demand to decisions.</p>
+        <span class="pill" data-in="2200">${PR.cytransit.status}</span>
+        <div class="note" data-in="2800">${PR.cytransit.note}</div>
+      </div>
+      <div class="col-right" style="width:calc(var(--u)*44)"><div class="ring">
+        <svg viewBox="0 0 100 100" data-in="900"><circle cx="50" cy="50" r="36" fill="none" stroke="rgba(147,197,253,.35)" stroke-width=".35" stroke-dasharray="1.2 1.2"/></svg>
+        <div class="core"><div data-in="700" data-fx="scale">CyTransit<br>AI</div></div>
+        ${PR.cytransit.steps.map((s, i) => { const a = -Math.PI / 2 + i * Math.PI / 3; return `<div class="mod" style="left:${50 + 36 * Math.cos(a)}%;top:${50 + 36 * Math.sin(a)}%"><div data-in="${1300 + i * 420}" data-fx="scale">${s}</div></div>`; }).join('')}
+      </div></div>` },
+
+    // FINALE
+    { id: 'tour', ch: 6, dur: 13500, veil: 0, shade: 0, speed: 1.2,
+      cam: [[0, 'prev'], [1500, 'Nicosia'], [3600, 'Nicosia'], [4800, 'Limassol'], [6300, 'Limassol'], [7500, 'Larnaca'], [9000, 'Larnaca'], [10200, 'Paphos'], [11800, 'island']],
+      map: t => { const seq = ['Nicosia', 'Limassol', 'Larnaca', 'Paphos', null]; const k = Math.min(4, Math.floor((t + 300) / 2700)); return { focus: seq[k], focusAmt: .8 }; },
+      html: `<div class="col-left" style="top:auto;bottom:calc(var(--u)*21);transform:none">${kick('Seven networks · one island')}</div><div class="city"></div>`,
+      update(t, root) {
+        const seq = ['Nicosia', 'Limassol', 'Larnaca', 'Paphos', 'Cyprus'], k = Math.min(4, Math.floor((t + 300) / 2700)), local = (t + 300) - k * 2700;
+        const el = root.querySelector('.city'); el.textContent = seq[k];
+        el.style.opacity = clamp(local / 500) * (k === 4 ? 1 - clamp((t - 12800) / 500) : 1 - clamp((local - 2300) / 400));
+        el.style.color = k === 4 ? '#fff' : (map.COLORS[seq[k]] || '#fff');
+      } },
+    { id: 'recap', ch: 6, dur: 14000, veil: 0, shade: .74, speed: 1, cam: [[0, 'prev'], [3000, 'island']],
+      html: `<div class="center" style="width:calc(var(--u)*88);top:54%">
+        ${kick('Twelve projects')}
+        <h2 data-in="400">Better data. <em>Better journeys.</em></h2>
+        <div class="recap">${window.PROJECTS.map((p, i) => `<div data-in="${900 + i * 260}" data-fx="scale"><small>${CH.find(c => c.id === p.chapter).title}</small><b>${p.name}</b><span>${p.status}</span></div>`).join('')}
+        </div>
+        <p class="lede" data-in="4200" style="margin:0 auto">Next stop: <b style="color:#fff">your routes.</b> Let’s talk at the stand.</p>
+      </div>` },
+    { id: 'play', ch: 6, dur: 17000, veil: 1, shade: 0, hideQR: true, speed: .8, cam: [[0, 'prev'], [3000, 'nicosiaWide']],
+      map: () => ({ focus: 'Nicosia', dim: .3 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*38)">
+        ${kick('Your turn')}
+        <h1 data-in="400" style="font-size:calc(var(--u)*6)">Beat<br>the <em>Bus.</em></h1>
+        <p class="lede" data-in="1200">Guess when five real Nicosia buses actually arrived. Can you beat the official timetable?</p>
+        <div class="qrcard" data-in="2000" data-fx="scale"><img src="../assets/qr-play.svg" alt="QR code"><b>Scan to play</b><span>on your phone · 60 seconds</span></div>
+      </div>
+      <div class="phone" data-in="1000" data-fx="up" style="right:calc(var(--u)*16);top:calc(var(--u)*11)">
+        <div class="ph-top">BEAT THE BUS</div>
+        <div class="mini-game">
+          <div class="tk"><b>11</b><span>Bus 2 of 5<br>Isokratous</span><em>08:02</em></div>
+          <div class="q">When does it really arrive?</div>
+          <div class="g">+0:00</div>
+          <div class="ax"><div class="mk" style="background:#fff;left:30%;transform:scale(.6)"></div><div class="mk you" style="background:var(--blue);box-shadow:0 0 0 calc(var(--u)*.5) rgba(10,92,255,.35)"></div><div class="mk real" style="background:var(--blue-soft);opacity:0"></div></div>
+          <div class="btn">Lock it in</div>
+        </div>
+      </div>`,
+      update(t, root) {
+        const k = ease(clamp((t - 2500) / 3500)), guess = k * 3.25;
+        root.querySelector('.mk.you').style.left = (30 + guess / 20 * 100) + '%';
+        root.querySelector('.g').textContent = '+' + Math.floor(guess) + ':' + String(Math.round((guess % 1) * 60)).padStart(2, '0');
+        const r = clamp((t - 7000) / 800); root.querySelector('.mk.real').style.opacity = r; root.querySelector('.mk.real').style.left = (30 + 3.4 / 20 * 100) + '%';
+      } },
+    { id: 'cta', ch: 6, dur: 15000, veil: 0, shade: .55, hideQR: true, speed: 1, cam: [[0, 'prev'], [4000, 'island']],
+      map: t => ({ dim: clamp((t - 13700) / 1100) }),
+      html: `<div class="center">
+        ${kick('Abasis.AI · Nicosia, Cyprus')}
+        <h1 data-in="400" style="font-size:calc(var(--u)*5.6)">Bring your routes.<br><em>Let’s make them clearer.</em></h1>
+        <p class="lede" data-in="1200">Timetables, validation, tracking pilots and evidence-based schedules — for operators, cities and schools.</p>
+        <div class="qrs">
+          <div class="qrcard" data-in="1900" data-fx="scale"><img src="../assets/qr-site.svg" alt="QR code"><b>Explore all 12 projects</b><span>abasis-ltd.github.io/cyprus-in-motion</span></div>
+          <div class="qrcard" data-in="2300" data-fx="scale"><img src="../assets/qr-play.svg" alt="QR code"><b>Play Beat the Bus</b><span>60 seconds · real data</span></div>
+        </div>
+        <div class="note" data-in="3000" style="margin-top:calc(var(--u)*2.4)">abasis.ai · gtfs.guru</div>
+      </div>` }
+  ];
+
+  // ---------- timeline ----------
+  const START = [], TAU0 = [];
+  let TOTAL = 0, TAU_TOTAL = 0;
+  SCENES.forEach((s, i) => { START[i] = TOTAL; TAU0[i] = TAU_TOTAL; TOTAL += s.dur; TAU_TOTAL += (s.speed ?? 1) * s.dur / 1000; });
+  const idxAt = G => { let i = 0; while (i < SCENES.length - 1 && START[i + 1] <= G) i++; return i; };
+
+  function resolveCam(key, i) { return key === 'prev' ? CAM_END[(i - 1 + SCENES.length) % SCENES.length] : (typeof key === 'string' ? CAM[key] : key); }
+  let CAM_END = [];
+  function camAt(i, t) {
+    const kf = SCENES[i].cam || [[0, 'prev']];
+    let a = kf[0], b = null;
+    for (let k = 1; k < kf.length; k++) { if (t >= kf[k][0]) a = kf[k]; else { b = kf[k]; break; } }
+    const A = resolveCam(a[1], i);
+    if (!b) return { ...A };
+    const B = resolveCam(b[1], i), k = ease(clamp((t - a[0]) / (b[0] - a[0])));
+    return { x: lerp(A.x, B.x, k), y: lerp(A.y, B.y, k), w: lerp(A.w, B.w, k) };
+  }
+  function computeCamEnds() {
+    CAM_END = SCENES.map(() => CAM.island);
+    for (let pass = 0; pass < 2; pass++) SCENES.forEach((s, i) => { CAM_END[i] = camAt(i, s.dur); });
+  }
+  computeCamEnds();
+  addEventListener('resize', () => { map.resize(); computeCams(); computeCamEnds(); });
+
+  // map state, blended with the previous scene for the first moments of each scene
+  const DEFAULTS = { reveal: 1, busAlpha: 1, dim: 0, focus: null, focusAmt: 1, feeds: [], school: null, ghost: null, pulse: null, labels: [] };
+  const sceneMap = (i, t) => Object.assign({}, DEFAULTS, SCENES[i].map ? SCENES[i].map(t) : {});
+  function mapState(i, t) {
+    const cur = sceneMap(i, t), pi = (i - 1 + SCENES.length) % SCENES.length;
+    const k = ease(clamp(t / 900));
+    if (k >= 1) return cur;
+    const prev = sceneMap(pi, SCENES[pi].dur);
+    cur.busAlpha = lerp(prev.busAlpha, cur.busAlpha, k);
+    cur.dim = lerp(prev.dim, cur.dim, k);
+    if (prev.focus !== cur.focus) {
+      if (k < .5) { cur.focus = prev.focus; cur.focusAmt = 1 - k * 2; } else cur.focusAmt = k * 2 - 1;
+    }
+    const fade = o => o && Object.assign({}, o, { alpha: (o.alpha ?? 1) * (1 - k) });
+    cur.feeds = cur.feeds.concat(prev.feeds.filter(f => !cur.feeds.some(c => c.key === f.key)).map(fade));
+    if (!cur.school && prev.school) cur.school = fade(prev.school);
+    if (!cur.ghost && prev.ghost) cur.ghost = fade(prev.ghost);
+    if (!cur.pulse && prev.pulse) cur.pulse = fade(prev.pulse);
+    cur.labels = cur.labels.concat(prev.labels.map(fade));
+    return cur;
+  }
+
+  // ---------- persistent chrome ----------
+  const line = $('#line');
+  CH.forEach((c, i) => line.insertAdjacentHTML('beforeend', `<div class="stop" style="left:${i * 20}%"><i></i><span>${c.n} ${c.title}</span></div>`));
+  line.insertAdjacentHTML('beforeend', '<div class="bus"></div>');
+  const lineStops = [...line.querySelectorAll('.stop')], lineBus = line.querySelector('.bus');
+  // progress: one segment per chapter, plus opening and finale
+  const groups = [];
+  SCENES.forEach((s, i) => { const g = groups[groups.length - 1]; if (g && g.ch === s.ch) g.end = START[i] + s.dur; else groups.push({ ch: s.ch, start: START[i], end: START[i] + s.dur }); });
+  groups.forEach(g => { const d = document.createElement('div'); d.style.flex = String(g.end - g.start); d.innerHTML = '<i></i>'; $('#progress').appendChild(d); g.bar = d.firstChild; });
+  const chapterStart = ch => { const i = SCENES.findIndex(s => s.ch === ch); return i < 0 ? 0 : START[i]; };
+
+  function chrome(i, t, G) {
+    const sc = SCENES[i];
+    // bus on the header line: rides to the chapter's stop during the chapter card
+    let pos = -1;
+    if (sc.ch >= 0 && sc.ch < CH.length) {
+      const into = G - chapterStart(sc.ch);
+      pos = sc.ch === 0 ? 0 : sc.ch - 1 + ease(clamp((into - 300) / 1800));
+    } else if (sc.ch >= CH.length) pos = CH.length - 1;
+    lineBus.style.opacity = pos < 0 ? 0 : 1;
+    lineBus.style.left = (Math.max(0, pos) * 20) + '%';
+    lineStops.forEach((el, k) => el.classList.toggle('on', sc.ch === k));
+    groups.forEach(g => { g.bar.style.width = (clamp((G - g.start) / (g.end - g.start)) * 100) + '%'; });
+    const prev = SCENES[(i - 1 + SCENES.length) % SCENES.length], k = ease(clamp(t / 900));
+    $('#veil').style.opacity = lerp(prev.veil ?? 1, sc.veil ?? 1, k);
+    $('#shade').style.opacity = lerp(prev.shade ?? 0, sc.shade ?? 0, k);
+    const qrWas = prev.hideQR ? 0 : 1, qrNow = sc.hideQR ? 0 : 1;
+    const qa = i === 0 ? clamp((t - 6000) / 800) * qrNow : lerp(qrWas, qrNow, clamp(t / 600));
+    $('#qr').style.opacity = qa; $('#qr').style.transform = `translateY(${(1 - qa) * 12}px)`;
+  }
+
+  // ---------- per-frame scene animation ----------
+  let curIdx = -1, root = null;
+  const stage = $('#stage');
+  function build(i) {
+    stage.textContent = '';
+    root = document.createElement('section');
+    root.className = 'scene';
+    root.innerHTML = SCENES[i].html;
+    stage.appendChild(root);
+    root._anims = [...root.querySelectorAll('[data-in]')];
+    root._counts = [...root.querySelectorAll('[data-count]')];
+    root._bars = [...root.querySelectorAll('[data-bar]')];
+    root._hbars = [...root.querySelectorAll('[data-hbar]')];
+    root._kb = [...root.querySelectorAll('[data-kb]')];
+    root._videos = [...root.querySelectorAll('video[data-clip]')];
+    root._videos.forEach(v => { v.muted = true; v.playsInline = true; if (RENDER) v.pause(); });
+    curIdx = i;
+  }
+  function animate(t, dur) {
+    for (const el of root._anims) {
+      const tin = +el.dataset.in;
+      const a = easeOut(clamp((t - tin) / 750));
+      const out = el.dataset.out ? +el.dataset.out : dur - 700;
+      const b = ease(clamp((t - out) / 550));
+      el.style.opacity = (a * (1 - b)).toFixed(3);
+      const fx = el.dataset.fx || 'up';
+      const u = `min(1vw, 1.7778vh)`;
+      el.style.transform =
+        fx === 'scale' ? `scale(${.92 + .08 * a - .03 * b})` :
+        fx === 'left' ? `translateX(calc(${u} * ${(-(1 - a) * 3).toFixed(3)}))` :
+        fx === 'tilt' ? `perspective(calc(${u} * 160)) rotateY(${(-16 * (1 - a) - 5).toFixed(2)}deg) translateY(calc(${u} * ${((1 - a) * 2).toFixed(3)}))` :
+        `translateY(calc(${u} * ${((1 - a) * 1.8 - b * 1).toFixed(3)}))`;
+    }
+    for (const el of root._counts) {
+      const at = +(el.dataset.at || 0), d = +(el.dataset.dur || 1800), to = +el.dataset.count, dec = +(el.dataset.dec || 0);
+      const k = 1 - Math.pow(1 - clamp((t - at) / d), 4);
+      el.textContent = dec ? (to * k).toFixed(dec) : fmt(to * k);
+    }
+    for (const el of root._bars) el.style.width = (+el.dataset.bar * easeOut(clamp((t - +(el.dataset.at || 0)) / 1300))) + '%';
+    for (const el of root._hbars) el.style.height = (+el.dataset.hbar * easeOut(clamp((t - +(el.dataset.at || 0)) / 900))) + '%';
+    for (const el of root._kb) { const k = clamp(t / dur); el.style.transform = el.dataset.kb === 'out' ? `scale(${1.1 - .08 * k})` : `scale(${1.02 + .08 * k}) translateY(${-k * 2}%)`; el.style.transformOrigin = '50% 20%'; }
+  }
+  // render mode: load → seek → wait until that exact frame is composited (with time-outs so nothing hangs)
+  const once = (el, ev, ms) => new Promise(r => { const done = () => { clearTimeout(id); r(); }; const id = setTimeout(done, ms); el.addEventListener(ev, done, { once: true }); });
+  async function seekExact(v, target) {
+    if (v.readyState < 2) await once(v, 'loadeddata', 8000);
+    const dur = isFinite(v.duration) ? v.duration : 1e9, want = Math.min(target, dur - .04);
+    if (Math.abs(v.currentTime - want) <= .004) return;
+    const seeked = once(v, 'seeked', 3000);
+    v.currentTime = want;
+    await seeked;
+    if (v.requestVideoFrameCallback) await Promise.race([new Promise(r => v.requestVideoFrameCallback(() => r())), new Promise(r => setTimeout(r, 400))]);
+  }
+  function syncVideos(t) {
+    const waits = [];
+    for (const v of root._videos) {
+      const at = +(v.dataset.at || 0), target = Math.max(0, (t - at) / 1000);
+      if (RENDER) waits.push(seekExact(v, target));
+      else if (t >= at && v.paused && !v.ended && !paused) {
+        if (Math.abs(v.currentTime - target) > .3) v.currentTime = target;
+        v.play().catch(() => {});
+      }
+    }
+    return Promise.all(waits);
+  }
+
+  function frame(Gabs) {
+    const loops = Math.floor(Gabs / TOTAL), G = Gabs - loops * TOTAL;
+    const i = idxAt(G), sc = SCENES[i], t = G - START[i];
+    if (i !== curIdx) build(i);
+    const st = mapState(i, t);
+    st.cam = camAt(i, t);
+    st.tau = loops * TAU_TOTAL + TAU0[i] + (sc.speed ?? 1) * t / 1000;
+    st.time = Gabs;
+    map.draw(st);
+    animate(t, sc.dur);
+    if (sc.update) sc.update(t, root);
+    chrome(i, t, G);
+    return syncVideos(t);
+  }
+
+  // ---------- live playback ----------
+  let paused = false, origin = performance.now(), pausedAt = 0;
+  const startAt = P.has('t') ? +P.get('t') * 1000 : P.has('scene') ? START[Math.max(0, SCENES.findIndex(s => s.id === P.get('scene')))] || 0 : 0;
+  origin -= startAt;
+  const now = () => paused ? pausedAt : performance.now() - origin;
+  const seek = ms => { const n = now(); origin += n - ms; if (paused) pausedAt = ms; };
+
+  if (RENDER) {
+    $('#hint').remove();
+    window.__show = {
+      total: TOTAL, fps: 30,
+      scenes: SCENES.map((s, i) => ({ id: s.id, start: START[i], dur: s.dur })),
+      ready: document.fonts.ready,
+      async render(ms) {
+        await frame(ms);
+        await Promise.all([...root.querySelectorAll('img')].map(img => img.decode().catch(() => {})));
+        return true;
+      }
+    };
+  } else {
+    const loop = () => { frame(now()); requestAnimationFrame(loop); };
+    document.fonts.ready.then(() => requestAnimationFrame(loop));
+    const clock = () => { $('#clock').innerHTML = `<span class="live">LIVE</span><span>${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Nicosia' })} NICOSIA</span>`; };
+    clock(); setInterval(clock, 10000);
+    addEventListener('keydown', e => {
+      const G = now() % TOTAL, i = idxAt(G);
+      if (e.key === ' ') {
+        paused = !paused; if (paused) pausedAt = performance.now() - origin; else origin = performance.now() - pausedAt;
+        document.body.classList.toggle('paused', paused);
+        root && root._videos.forEach(v => paused ? v.pause() : null);
+        e.preventDefault();
+      }
+      if (e.key === 'ArrowRight') seek(now() - G + START[(i + 1) % SCENES.length] + (i === SCENES.length - 1 ? TOTAL : 0));
+      if (e.key === 'ArrowLeft') seek(now() - G + START[(i - 1 + SCENES.length) % SCENES.length] - (i === 0 ? TOTAL : 0));
+      if (e.key === 'Home') seek(0);
+      if (/^[1-6]$/.test(e.key)) seek(now() - G + chapterStart(+e.key - 1));
+      if (e.key === 'f' || e.key === 'F') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    });
+    let hide;
+    addEventListener('mousemove', () => { document.body.classList.add('cursor'); clearTimeout(hide); hide = setTimeout(() => document.body.classList.remove('cursor'), 2500); });
+    addEventListener('dblclick', () => document.documentElement.requestFullscreen && document.documentElement.requestFullscreen());
+  }
+  window.__showInfo = { total: TOTAL, scenes: SCENES.map((s, i) => ({ id: s.id, ch: s.ch, start: START[i], dur: s.dur })) };
+})();
+</script>
+</body>
+</html>

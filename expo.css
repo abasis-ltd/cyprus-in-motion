@@ -1,0 +1,41 @@
+@import url("assets/fonts/fonts.css");
+
+/* Abasis.AI brand: logo gradient #0A5CFF → #082E9F, site blues, slate neutrals, Geist + Fira Code */
+:root {
+  --blue: #0A5CFF;
+  --blue-deep: #082E9F;
+  --blue-site: #2563EB;
+  --blue-bright: #3B82F6;
+  --blue-mid: #60A5FA;
+  --blue-soft: #93C5FD;
+  --blue-pale: #DBEAFE;
+  --night: #0F172A;
+  --night-2: #1E293B;
+  --ink: #F8FAFC;
+  --text-2: #CBD5E1;
+  --muted: #94A3B8;
+  --on-light: #0F172A;
+  --line: rgba(248, 250, 252, .12);
+  --accent: var(--blue-soft);
+  --display: "Geist", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --text: "Geist", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono: "Fira Code", "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--night);
+  color: var(--ink);
+  font-family: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; }
+.mono { font-family: var(--mono); letter-spacing: .02em; }
+.kicker {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}

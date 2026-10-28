@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Expo Kit — Cyprus in Motion</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/abasis-icon.svg">
+<link rel="stylesheet" href="expo.css">
+<style>
+  html, body { height: auto; }
+  body { padding: 48px 20px 64px; background: radial-gradient(100% 60% at 85% 0%, var(--blue-deep), var(--night) 70%); }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  .logo { height: 48px; margin-left: -10px; }
+  h1 { font-size: clamp(44px, 6vw, 84px); font-weight: 800; letter-spacing: -.055em; line-height: .95; margin: 18px 0 14px; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .lede { font-size: 18px; color: var(--text-2); max-width: 720px; line-height: 1.55; margin: 0 0 40px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+  .tile { display: flex; flex-direction: column; gap: 10px; padding: 26px; border-radius: 22px; background: rgba(248,250,252,.04); border: 1px solid var(--line); }
+  .tile .n { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; color: var(--accent); }
+  .tile h2 { margin: 0; font-size: 26px; letter-spacing: -.03em; }
+  .tile p { margin: 0; color: var(--text-2); line-height: 1.55; font-size: 15px; }
+  .tile ul { margin: 0; padding-left: 18px; color: var(--text-2); font-size: 14px; line-height: 1.7; }
+  .tile code { font-family: var(--mono); font-size: 12px; color: var(--blue-pale); background: rgba(147,197,253,.12); padding: 2px 6px; border-radius: 5px; }
+  .links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 8px; }
+  .links a { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 99px; font-weight: 700; font-size: 14px; text-decoration: none; border: 1.5px solid rgba(248,250,252,.22); color: var(--ink); }
+  .links a.p { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .qrs { display: flex; gap: 14px; flex-wrap: wrap; }
+  .qrs figure { margin: 0; width: 140px; background: #fff; border-radius: 14px; padding: 10px 10px 8px; color: var(--on-light); text-align: center; }
+  .qrs img { width: 100%; display: block; }
+  .qrs figcaption { font-size: 12px; font-weight: 700; margin-top: 4px; }
+  footer { margin-top: 40px; font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <img class="logo" src="assets/abasis-logo-white.svg" alt="Abasis.AI">
+  <h1>Expo kit · <em>Cyprus in Motion</em></h1>
+  <p class="lede">Everything for the stand in one folder. It all runs offline from this folder on a Mac — the website and the game are also online, so visitors can open them on their phones from the QR codes.</p>
+  <div class="grid">
+    <section class="tile">
+      <span class="n">01 · BIG SCREEN</span>
+      <h2>The expo show</h2>
+      <p>An 8-minute looping presentation: all 12 projects on a live map of every bus line in Cyprus, with real product captures. It never stops and needs no clicks.</p>
+      <ul>
+        <li>Mac: double-click <code>Start show (kiosk).command</code></li>
+        <li>Any TV with USB: play <code>media/cyprus-in-motion-show-1080p.mp4</code> on repeat</li>
+        <li>Keys: <code>Space</code> pause · <code>← →</code> scenes · <code>1–6</code> chapters · <code>F</code> full screen</li>
+      </ul>
+      <div class="links"><a class="p" href="show/">Open the show</a><a href="media/cyprus-in-motion-show-1080p.mp4" download>Download MP4</a></div>
+    </section>
+    <section class="tile">
+      <span class="n">02 · TABLET / SECOND SCREEN</span>
+      <h2>Beat the Bus</h2>
+      <p>Visitors guess when five real Nicosia buses arrived and try to beat the official timetable. Booth mode shows today’s leaderboard and resets after 60 s idle.</p>
+      <ul>
+        <li>Mac: double-click <code>Start game (kiosk).command</code></li>
+        <li>Tablet: open <code>play/?booth=1</code> from the website and add it to the home screen</li>
+      </ul>
+      <div class="links"><a class="p" href="play/?booth=1">Booth mode</a><a href="play/">Phone version</a></div>
+    </section>
+    <section class="tile">
+      <span class="n">03 · VISITORS’ PHONES</span>
+      <h2>QR codes</h2>
+      <p>Both codes are verified with a decoder and point to the public website.</p>
+      <div class="qrs">
+        <figure><img src="assets/qr-play.svg" alt="QR code: play Beat the Bus"><figcaption>Play the game</figcaption></figure>
+        <figure><img src="assets/qr-site.svg" alt="QR code: explore the projects"><figcaption>Explore 12 projects</figcaption></figure>
+      </div>
+      <div class="links"><a href="assets/qr-play.svg" download>qr-play.svg</a><a href="assets/qr-site.svg" download>qr-site.svg</a></div>
+    </section>
+    <section class="tile">
+      <span class="n">04 · PRINT</span>
+      <h2>Brochure & table card</h2>
+      <p>A4 landscape tri-fold (print double-sided, flip on the short edge, fold in three) and an A5 “Scan to play” card for the table.</p>
+      <div class="links"><a class="p" href="brochure.pdf">brochure.pdf</a><a href="card.pdf">card.pdf</a></div>
+    </section>
+    <section class="tile">
+      <span class="n">05 · WEB</span>
+      <h2>The showcase website</h2>
+      <p>Every project with the problem, how it works, real numbers, honest status, screenshots and clips. Mobile-first.</p>
+      <div class="links"><a class="p" href="./">Open the website</a><a href="https://abasis-ltd.github.io/cyprus-in-motion/">Online version ↗</a></div>
+    </section>
+  </div>
+  <footer>Facts from the projects’ repositories, feeds and evaluation reports as of 27 Oct 2026. Rebuild data: <code>python3 build_data.py</code> · QR codes: <code>python3 build_qr.py</code> · MP4: <code>node render_show.cjs out.mp4</code> (Playwright + ffmpeg).</footer>
+</div>
+</body>
+</html>

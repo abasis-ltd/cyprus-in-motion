@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cyprus in Motion — Brochure</title>
+<link rel="stylesheet" href="assets/fonts/fonts.css">
+<style>
+  /* Abasis.AI brand: logo gradient #0A5CFF → #082E9F, site blues, slate neutrals, Geist + Fira Code.
+     Project copy, numbers, statuses and notes are filled from data/projects.js (data-p / data-nums). */
+  :root {
+    --blue: #0A5CFF; --blue-deep: #082E9F; --blue-site: #2563EB; --blue-mid: #60A5FA;
+    --blue-soft: #93C5FD; --blue-pale: #DBEAFE; --blue-wash: #EFF6FF;
+    --ink: #0F172A; --slate: #475569; --muted: #64748B; --rule: #E2E8F0; --gray: #CBD5E1;
+    --sans: "Geist", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --mono: "Fira Code", "SF Mono", Menlo, Consolas, monospace;
+    --rail-x: 6.2mm;
+  }
+  * { box-sizing: border-box; }
+  @page { size: A4 landscape; margin: 0; }
+  html, body { margin: 0; }
+  body { background: #1E293B; color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sheet { width: 297mm; height: 210mm; margin: 10mm auto; display: grid; grid-template-columns: 97mm 100mm 100mm; background: #fff; box-shadow: 0 10px 40px rgba(0,0,0,.4); overflow: hidden; break-after: page; position: relative; }
+  .sheet:last-child { break-after: auto; }
+  .sheet.inside { grid-template-columns: 100mm 100mm 97mm; }
+  @media print { body { background: none; } .sheet { margin: 0; box-shadow: none; } .help { display: none; } }
+  .help { text-align: center; color: var(--gray); font-family: var(--mono); font-size: 13px; padding: 16px; }
+  .help button { font: inherit; padding: 8px 16px; border-radius: 8px; border: 0; background: var(--blue); color: #fff; cursor: pointer; margin-left: 10px; }
+
+  .panel { position: relative; padding: 9.5mm 7mm 8mm 11.5mm; display: flex; flex-direction: column; overflow: hidden; }
+  .panel + .panel { border-left: .2mm dashed var(--rule); }
+  .panel.plain { padding-left: 9mm; padding-right: 9mm; }
+  /* the bus line that runs down each content panel; chapters are its stops */
+  .rail { position: absolute; left: var(--rail-x); top: 0; bottom: 0; width: .7mm; background: linear-gradient(180deg, var(--blue-pale), var(--blue-soft) 12%, var(--blue-soft) 88%, var(--blue-pale)); }
+  .stop-head { position: relative; display: flex; align-items: center; gap: 2mm; font-family: var(--mono); font-size: 6.6pt; letter-spacing: .16em; text-transform: uppercase; color: var(--blue); margin-bottom: 2.4mm; }
+  .stop-head::before { content: ""; position: absolute; left: calc(var(--rail-x) + .35mm - 11.5mm - 2.2mm); top: 50%; width: 4.4mm; height: 4.4mm; margin-top: -2.2mm; border-radius: 50%; background: #fff; border: 1.3mm solid var(--blue); box-sizing: border-box; }
+  .stop-head b { font-weight: 600; color: var(--blue-deep); }
+
+  h1 { font-weight: 800; font-size: 40pt; line-height: .9; letter-spacing: -.05em; margin: 0 0 4mm; }
+  h2 { font-weight: 800; font-size: 16.5pt; line-height: 1.04; letter-spacing: -.04em; margin: 0 0 2.4mm; }
+  h1 em, h2 em { font-style: normal; color: var(--blue); }
+  h3 { font-weight: 700; font-size: 10pt; margin: 0; letter-spacing: -.02em; }
+  p { font-size: 8pt; line-height: 1.42; margin: 0 0 2.2mm; color: var(--slate); }
+  p b { color: var(--ink); }
+  .fine { font-family: var(--mono); font-size: 5.5pt; line-height: 1.55; color: var(--muted); }
+  .proj { margin-bottom: 2.6mm; }
+  .ph { display: flex; align-items: baseline; justify-content: space-between; gap: 2mm; margin-bottom: 1.2mm; }
+  .status { flex: none; font-family: var(--mono); font-size: 5.2pt; letter-spacing: .06em; text-transform: uppercase; padding: .7mm 1.6mm; border-radius: 1mm; background: var(--blue-wash); color: var(--blue-deep); border: .2mm solid var(--blue-pale); white-space: nowrap; }
+  .status.block { display: inline-block; white-space: normal; margin-bottom: 1.4mm; }
+  .nums { display: grid; gap: 2mm 3mm; margin: 1.6mm 0 1.6mm; }
+  .nums.c2 { grid-template-columns: 1fr 1fr; row-gap: 1.6mm; } .nums.c3 { grid-template-columns: repeat(3, 1fr); } .nums.c4 { grid-template-columns: repeat(4, 1fr); }
+  .nums div b { display: block; font-weight: 800; font-size: 13pt; letter-spacing: -.045em; line-height: 1; color: var(--blue-deep); }
+  .nums div span { display: block; font-family: var(--mono); font-size: 5pt; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: .9mm; line-height: 1.35; }
+  ol.steps { list-style: none; counter-reset: s; margin: 0 0 2mm; padding: 0; }
+  ol.steps li { counter-increment: s; position: relative; padding-left: 5.4mm; font-size: 7.6pt; line-height: 1.38; color: var(--ink); margin-bottom: 1.3mm; }
+  ol.steps li::before { content: counter(s); position: absolute; left: 0; top: .1mm; width: 3.6mm; height: 3.6mm; border-radius: 50%; background: var(--blue); color: #fff; font-family: var(--mono); font-size: 5.4pt; font-weight: 600; display: grid; place-items: center; }
+  .chips { display: flex; flex-wrap: wrap; gap: 1.2mm; margin: 1mm 0 2mm; }
+  .chips span { font-size: 6.6pt; padding: .9mm 1.8mm; border-radius: 1.2mm; background: var(--blue-wash); color: var(--blue-deep); border: .2mm solid var(--blue-pale); }
+  .label { font-family: var(--mono); font-size: 5.6pt; letter-spacing: .12em; text-transform: uppercase; color: var(--blue); margin: 2mm 0 1.4mm; }
+
+  /* charts */
+  .map svg { display: block; width: 100%; height: auto; }
+  .legend { display: flex; flex-wrap: wrap; gap: 1mm 3mm; font-size: 6.2pt; color: var(--slate); margin: 1.2mm 0 1.6mm; }
+  .legend i { display: inline-block; width: 4mm; height: 1.1mm; border-radius: 1mm; margin-right: 1mm; vertical-align: .4mm; }
+  .race .row { display: grid; grid-template-columns: 24mm 1fr 11mm; align-items: center; gap: 1.6mm; font-size: 7pt; margin-bottom: 1mm; }
+  .race .row b { font-family: var(--mono); font-size: 6.6pt; font-weight: 500; text-align: right; }
+  .race .tr { height: 2.8mm; border-radius: 2mm; background: var(--rule); overflow: hidden; }
+  .race .tr div { height: 100%; border-radius: 2mm; }
+  .race .cap { font-family: var(--mono); font-size: 5.4pt; color: var(--blue); letter-spacing: .06em; margin-bottom: 1mm; }
+  .split { display: flex; height: 5.2mm; border-radius: 1.2mm; overflow: hidden; margin: 1.2mm 0 1mm; }
+  .split div { display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 6pt; font-weight: 500; }
+  .prow { display: grid; grid-template-columns: 6.6mm 1fr 15mm; align-items: center; gap: 1.6mm; margin-bottom: 1mm; }
+  .prow .rn { height: 3.6mm; border-radius: .8mm; background: var(--ink); color: #fff; font-weight: 800; font-size: 6.4pt; display: grid; place-items: center; }
+  .prow .pb { display: flex; height: 3.6mm; border-radius: .8mm; overflow: hidden; background: var(--rule); }
+  .prow b { font-family: var(--mono); font-size: 5.8pt; font-weight: 500; color: var(--slate); text-align: right; white-space: nowrap; }
+  table.tt { width: 100%; border-collapse: collapse; font-size: 6.8pt; margin-bottom: 1.4mm; font-variant-numeric: tabular-nums; }
+  table.tt th { font-family: var(--mono); font-weight: 400; font-size: 5pt; letter-spacing: .1em; text-transform: uppercase; color: var(--blue); text-align: left; padding: 0 1mm .9mm 0; }
+  table.tt td { padding: .75mm 1mm .75mm 0; border-top: .2mm solid var(--rule); }
+  table.tt td.hl { font-weight: 700; }
+  table.tt td.d { font-family: var(--mono); color: var(--blue-deep); text-align: right; }
+  .big { font-weight: 800; font-size: 28pt; letter-spacing: -.055em; line-height: 1; color: var(--blue); }
+  .big + .label { margin-top: 1mm; }
+  .bars .row { display: grid; grid-template-columns: 25mm 1fr 12mm; align-items: center; gap: 1.6mm; font-size: 7pt; margin-bottom: 1.2mm; }
+  .bars .row b { font-family: var(--mono); font-size: 6.6pt; font-weight: 500; text-align: right; }
+  .bars .tr { height: 2.8mm; border-radius: 2mm; background: var(--rule); overflow: hidden; }
+  .bars .tr div { height: 100%; border-radius: 2mm; }
+  .pipe { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1mm; margin: 1.6mm 0 2mm; position: relative; }
+  .pipe::before { content: ""; position: absolute; left: 6mm; right: 6mm; top: 50%; height: .4mm; background: var(--blue-soft); }
+  .pipe div { position: relative; text-align: center; padding: 1.6mm .6mm; border-radius: 1.4mm; background: #fff; border: .25mm solid var(--blue-soft); font-size: 6pt; font-weight: 700; line-height: 1.2; }
+  .pipe div small { display: block; font-family: var(--mono); font-weight: 400; font-size: 4.6pt; color: var(--blue); margin-bottom: .6mm; letter-spacing: .04em; }
+  .spark { display: flex; align-items: flex-end; gap: .35mm; height: 9mm; margin: .8mm 0 .6mm; }
+  .flap p { font-size: 7.6pt; line-height: 1.36; margin-bottom: 1.4mm; }
+  .flap .proj { margin-bottom: 3.4mm; }
+  .flap .nums { margin: 1mm 0 1mm; }
+  .flap .chips span { font-size: 5.8pt; padding: .6mm 1.4mm; }
+  .spark div { flex: 1; background: linear-gradient(180deg, var(--blue-soft), var(--blue)); border-radius: .3mm .3mm 0 0; }
+  .spark-axis { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 4.6pt; color: var(--muted); }
+
+  /* outside */
+  .dark { background: linear-gradient(160deg, var(--blue) 0%, var(--blue-deep) 62%); color: #fff; padding: 10mm 9mm 9mm; }
+  .dark p { color: var(--blue-pale); }
+  .dark .fine { color: var(--blue-soft); }
+  .dark h1 em { color: var(--blue-soft); }
+  .mapwrap { position: absolute; inset: 0; }
+  .mapwrap canvas { width: 100%; height: 100%; display: block; }
+  .logo { height: 9mm; width: auto; align-self: flex-start; display: block; position: relative; z-index: 1; }
+  .cover-text { position: relative; z-index: 1; margin-top: auto; }
+  .kicker { font-family: var(--mono); font-size: 6.6pt; letter-spacing: .16em; text-transform: uppercase; margin-bottom: 3.4mm; color: var(--blue); display: flex; align-items: center; gap: 2mm; }
+  .kicker::before { content: ""; width: 6mm; height: .5mm; background: currentColor; }
+  .dark .kicker { color: var(--blue-pale); }
+  .tagline { font-family: var(--mono); font-size: 7pt; letter-spacing: .04em; color: #fff; margin: 0 0 4.4mm; }
+  .tagline b { color: var(--blue-soft); font-weight: 500; }
+  .cover-line { position: relative; height: 12.5mm; margin: 0 4mm 4mm; }
+  .cover-line::before { content: ""; position: absolute; left: 0; right: 0; top: 1.5mm; height: .6mm; border-radius: 1mm; background: linear-gradient(90deg, #fff, var(--blue-soft)); }
+  .cover-line span { position: absolute; top: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: .5mm; font-family: var(--mono); font-size: 4.8pt; letter-spacing: .08em; text-transform: uppercase; color: var(--blue-pale); white-space: nowrap; line-height: 1.2; }
+  .cover-line span b { font-weight: 600; color: #fff; margin-top: .7mm; }
+  .cover-line span::before { content: ""; width: 2.2mm; height: 2.2mm; border-radius: 50%; background: var(--blue-deep); border: .7mm solid #fff; box-sizing: border-box; margin-top: .25mm; order: -1; }
+  .cover-stats { display: flex; gap: 6mm; margin-bottom: 3.4mm; }
+  .cover-stats b { display: block; font-size: 14pt; font-weight: 800; letter-spacing: -.04em; line-height: 1; }
+  .cover-stats span { font-family: var(--mono); font-size: 5pt; letter-spacing: .1em; text-transform: uppercase; color: var(--blue-soft); }
+  .qrs { display: flex; flex-direction: column; gap: 3mm; margin: 1mm 0 4mm; }
+  .qrrow { display: grid; grid-template-columns: 34mm 1fr; gap: 3.4mm; align-items: center; padding: 2.4mm; border-radius: 2.4mm; background: var(--blue-wash); border: .25mm solid var(--blue-pale); }
+  .qrrow img { width: 34mm; height: 34mm; display: block; border-radius: 1mm; }
+  .qrrow h3 { font-size: 11pt; margin-bottom: 1mm; line-height: 1.1; }
+  .qrrow p { font-size: 7.2pt; margin-bottom: 1.4mm; }
+  .qrrow .url { font-family: var(--mono); font-size: 5.4pt; color: var(--blue-deep); line-height: 1.4; white-space: nowrap; }
+  ul.svc { margin: 0 0 3mm; padding-left: 3.6mm; font-size: 7.6pt; line-height: 1.55; color: var(--slate); }
+  ul.svc li::marker { color: var(--blue); }
+  .terminus { position: relative; display: flex; align-items: center; gap: 2mm; font-family: var(--mono); font-size: 6.6pt; letter-spacing: .16em; text-transform: uppercase; color: var(--blue); margin-bottom: 2.4mm; }
+</style>
+</head>
+<body>
+<div class="help">A4 landscape tri-fold · print double-sided, flip on the short edge · fold the right panel in, then the cover over it · <button onclick="print()">Print / Save PDF</button></div>
+
+<!-- OUTSIDE (page 1): inner flap · back · cover -->
+<div class="sheet">
+  <section class="panel flap">
+    <div class="rail"></div>
+    <div class="stop-head"><b>06</b> Move</div>
+    <h2>More ways we make <em>mobility work.</em></h2>
+    <div class="proj">
+      <div class="ph"><h3>Cyprus Motorist Hub</h3></div>
+      <span class="status block" data-p="motorist.status"></span>
+      <p data-p="motorist.one"></p>
+      <div class="nums c3" data-nums="motorist"></div>
+    </div>
+    <div class="proj">
+      <div class="ph"><h3>BikeStat</h3><span class="status" data-p="bikestat.status"></span></div>
+      <p data-p="bikestat.one"></p>
+      <div class="spark-axis"><span>00h</span><span>estimated rentals by hour of day · 15–24 June 2026</span><span>23h</span></div>
+      <div class="spark" id="spark"></div>
+      <div class="nums c3" data-nums="bikestat"></div>
+      <div class="fine" data-p="bikestat.note"></div>
+    </div>
+    <div class="proj">
+      <div class="ph"><h3>BusRider</h3><span class="status" data-p="busrider.status"></span></div>
+      <p data-p="busrider.one"></p>
+    </div>
+    <div class="proj">
+      <div class="ph"><h3>ExamRide</h3><span class="status" data-p="examride.status"></span></div>
+      <p data-p="examride.one"></p>
+    </div>
+    <div class="proj">
+      <div class="ph"><h3>Zelo e-bikes</h3></div>
+      <span class="status block" data-p="zelo.status"></span>
+      <p data-p="zelo.one"></p>
+    </div>
+    <div class="proj" style="margin-bottom:0">
+      <div class="ph"><h3>CyTransit AI</h3><span class="status" data-p="cytransit.status"></span></div>
+      <p data-p="cytransit.one"></p>
+      <div class="chips" data-chips="cytransit"></div>
+      <div class="fine" data-p="cytransit.note"></div>
+    </div>
+  </section>
+
+  <section class="panel plain">
+    <div class="kicker">Next stop: your routes</div>
+    <h2 style="font-size:18pt">Bring your routes. <em>Let’s make them clearer.</em></h2>
+    <p>We help operators, municipalities, schools and tour companies publish clean timetables, check them automatically, track vehicles and set schedules from evidence.</p>
+    <div class="qrs">
+      <div class="qrrow">
+        <img src="assets/qr-play.svg" alt="QR code: play Beat the Bus">
+        <div><h3>Play Beat the Bus</h3><p>60 seconds, real Nicosia data. Can you beat the official timetable?</p><div class="url">abasis-ltd.github.io/<br>cyprus-in-motion/play</div></div>
+      </div>
+      <div class="qrrow">
+        <img src="assets/qr-site.svg" alt="QR code: explore all projects">
+        <div><h3>Explore all 12 projects</h3><p>Maps, videos and the full story online.</p><div class="url">abasis-ltd.github.io/<br>cyprus-in-motion</div></div>
+      </div>
+    </div>
+    <p style="margin-bottom:1.2mm"><b>Request a transit-data review</b> — at the stand or via <b>abasis.ai</b>:</p>
+    <ul class="svc">
+      <li>GTFS creation &amp; editing</li>
+      <li>Feed validation — <b>gtfs.guru</b></li>
+      <li>Phone-based vehicle tracking pilots</li>
+      <li>Observed timetables &amp; arrival predictions</li>
+    </ul>
+    <div style="margin-top:auto">
+      <img class="logo" src="assets/abasis-logo.svg" alt="Abasis.AI" style="height:10mm;margin:0 0 2mm -2.6mm">
+      <div class="fine">Nicosia, Cyprus · abasis.ai · gtfs.guru<br>Figures from local project data as of 27 Oct 2026. Proposals and prototypes are labelled as such; no deployment or partnership is implied.</div>
+    </div>
+  </section>
+
+  <section class="panel dark">
+    <div class="mapwrap"><canvas id="cover"></canvas></div>
+    <img class="logo" src="assets/abasis-logo-white.svg" alt="Abasis.AI" style="margin-left:-2.4mm">
+    <div class="cover-text">
+      <div class="kicker">Mobility Lab · Expo edition</div>
+      <h1>Cyprus<br>in <em>motion.</em></h1>
+      <p style="font-size:9pt;margin-bottom:3mm">Tools to create, validate, track and predict public transport — built on every bus line on the island.</p>
+      <div class="tagline"><b>12 projects</b> · create, validate, track, predict, understand, move</div>
+      <div class="cover-line" id="coverLine"></div>
+      <div class="cover-stats" id="coverStats"></div>
+      <div class="fine">Map: 652 real route shapes from the public GTFS feeds of 7 operators</div>
+    </div>
+  </section>
+</div>
+
+<!-- INSIDE (page 2): create + validate · track + predict · understand -->
+<div class="sheet inside">
+  <section class="panel">
+    <div class="rail"></div>
+    <div class="stop-head"><b>01</b> Create</div>
+    <h2>From spreadsheet <em>to standard feed.</em></h2>
+    <div class="proj">
+      <div class="ph"><h3>GTFS Web Editor</h3><span class="status" data-p="kapnos.status"></span></div>
+      <p data-p="kapnos.one"></p>
+      <div class="map" id="airportMap"></div>
+      <div class="legend"><span><i style="background:var(--blue)"></i>Kapnos Airport Shuttle</span><span><i style="background:var(--blue-mid)"></i>Limassol Airport Express</span></div>
+      <div class="nums c4" data-nums="kapnos"></div>
+      <div class="fine" data-p="kapnos.note"></div>
+    </div>
+    <div class="proj">
+      <div class="ph"><h3>Limassol Airport Express</h3><span class="status" data-p="limassol.status"></span></div>
+      <div class="nums c3" data-nums="limassol" style="margin-top:.6mm"></div>
+    </div>
+    <div class="stop-head" style="margin-top:1mm"><b>02</b> Validate</div>
+    <h2>Catch the error <em>before the journey.</em></h2>
+    <div class="proj" style="margin-bottom:0">
+      <div class="ph"><h3>GTFS Guru</h3><span class="status" data-p="guru.status"></span></div>
+      <p data-p="guru.one"></p>
+      <div class="race">
+        <div class="cap">Netherlands national feed · 16.0M stop-time rows</div>
+        <div class="row"><span>GTFS Guru</span><div class="tr"><div style="width:15%;background:var(--blue)"></div></div><b>9.75 s</b></div>
+        <div class="row"><span>Java validator 8.0.1</span><div class="tr"><div style="width:100%;background:var(--gray)"></div></div><b>65.18 s</b></div>
+      </div>
+      <div class="nums c2" data-nums="guru"></div>
+      <div class="fine" data-p="guru.note"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="rail"></div>
+    <div class="stop-head"><b>03</b> Track</div>
+    <h2>Start with the <em>driver’s phone.</em></h2>
+    <div class="proj">
+      <div class="ph"><h3>School Bus Tracker</h3></div>
+      <span class="status block" data-p="schoolbus.status"></span>
+      <p data-p="schoolbus.one"></p>
+      <ol class="steps" data-steps="schoolbus"></ol>
+      <div class="label">Next: parents</div>
+      <div class="chips" data-chips-of="schoolbus.next"></div>
+      <div class="fine" data-p="schoolbus.note"></div>
+    </div>
+    <div class="stop-head" style="margin-top:1.4mm"><b>04</b> Predict</div>
+    <h2>When the GPS goes quiet, <em>the bus stays on the map.</em></h2>
+    <div class="proj" style="margin-bottom:0">
+      <div class="ph"><h3>Shadow GTFS-RT API</h3></div>
+      <span class="status block" data-p="shadow.status"></span>
+      <p data-p="shadow.one"></p>
+      <div class="pipe">
+        <div><small>input</small>Live feeds</div>
+        <div><small>30 s</small>Collector</div>
+        <div><small>learned</small>CatBoost</div>
+        <div><small>on road</small>Kalman</div>
+        <div><small>output</small>GTFS-RT</div>
+      </div>
+      <ol class="steps" data-steps="shadow"></ol>
+      <div class="nums c3" data-nums="shadow"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="rail"></div>
+    <div class="stop-head"><b>05</b> Understand</div>
+    <h2>Planned vs. <em>what really happens.</em></h2>
+    <p>Since 21 July 2026 we have archived every public bus feed in Cyprus — 51.7M GPS positions and 11.9M stop passages over 98 service days.</p>
+    <div class="label" style="margin-top:0">One stop · eight Mondays · Ministry of Finance, Nicosia</div>
+    <div class="split" id="split"></div>
+    <div class="legend" style="margin-top:0"><span><i style="background:var(--blue)"></i>−1 to +5 min</span><span><i style="background:var(--blue-soft)"></i>over 5 min late</span><span><i style="background:var(--blue-pale)"></i>over 1 min early</span></div>
+    <div id="routes"></div>
+    <div class="label">Route 11 · typical Monday morning</div>
+    <table class="tt" id="tt"></table>
+    <div class="ph" style="margin-top:1.6mm"><h3>Observed &amp; predicted timetables</h3></div>
+    <span class="status block" data-p="timetable.status"></span>
+    <div class="big">−25.7%</div>
+    <div class="label">mean arrival error vs the published timetable</div>
+    <div class="bars">
+      <div class="row"><span>Published timetable</span><div class="tr"><div style="width:100%;background:var(--gray)"></div></div><b>4.94 min</b></div>
+      <div class="row"><span>Historical median</span><div class="tr"><div style="width:75.2%;background:var(--blue-mid)"></div></div><b>3.71 min</b></div>
+      <div class="row"><span>Our CatBoost model</span><div class="tr"><div style="width:74.3%;background:var(--blue)"></div></div><b>3.67 min</b></div>
+    </div>
+    <div class="nums c2" id="ttNums"></div>
+    <div class="fine" data-p="timetable.note"></div>
+  </section>
+</div>
+
+<script src="data/network.js"></script>
+<script src="data/overlays.js"></script>
+<script src="data/timetable.js"></script>
+<script src="data/projects.js"></script>
+<script>
+(() => {
+  'use strict';
+  const PR = Object.fromEntries(window.PROJECTS.map(p => [p.id, p]));
+  const O = window.OVERLAYS, N = window.NETWORK, TT = window.TIMETABLE;
+  const get = path => path.split('.').reduce((o, k) => o && o[k], PR);
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+  // copy straight from data/projects.js
+  document.querySelectorAll('[data-p]').forEach(el => { el.textContent = get(el.dataset.p); });
+  document.querySelectorAll('[data-nums]').forEach(el => {
+    el.innerHTML = PR[el.dataset.nums].numbers.map(([v, l]) => `<div><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join('');
+  });
+  document.querySelectorAll('[data-steps]').forEach(el => { el.innerHTML = PR[el.dataset.steps].steps.map(s => `<li>${esc(s)}</li>`).join(''); });
+  document.querySelectorAll('[data-chips]').forEach(el => { el.innerHTML = PR[el.dataset.chips].steps.map(s => `<span>${esc(s)}</span>`).join(''); });
+  document.querySelectorAll('[data-chips-of]').forEach(el => { el.innerHTML = get(el.dataset.chipsOf).map(s => `<span>${esc(s)}</span>`).join(''); });
+  // the timetable project's headline numbers sit beside the big −25.7%, so show the other two
+  document.getElementById('ttNums').innerHTML = PR.timetable.numbers.slice(1).map(([v, l]) => `<div><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join('');
+
+  // cover: chapter line and network counts
+  const chapters = window.CHAPTERS;
+  document.getElementById('coverLine').innerHTML = chapters.map((c, i) => `<span style="left:${i * 20}%"><b>${c.n}</b>${c.title}</span>`).join('');
+  const C = N.counts;
+  document.getElementById('coverStats').innerHTML = [[C.routes, 'bus routes'], [C.stops, 'stops'], [C.trips, 'scheduled trips']]
+    .map(([v, l]) => `<div><b>${v.toLocaleString('en-US')}</b><span>${l}</span></div>`).join('');
+
+  // airport shuttle map: both feeds over the whole public network (vector, real shapes)
+  (() => {
+    const lines = [...O.kapnos.lines, ...O.limassol.lines];
+    const b = [1e9, 1e9, -1e9, -1e9];
+    lines.forEach(l => { for (let i = 0; i < l.p.length; i += 2) { b[0] = Math.min(b[0], l.p[i]); b[1] = Math.min(b[1], l.p[i + 1]); b[2] = Math.max(b[2], l.p[i]); b[3] = Math.max(b[3], l.p[i + 1]); } });
+    const pad = 260; b[0] -= pad; b[1] -= pad * 1.1; b[2] += pad * 1.6; b[3] += pad;
+    const w = b[2] - b[0], h = b[3] - b[1];
+    const inView = p => { for (let i = 0; i < p.length; i += 2) if (p[i] > b[0] && p[i] < b[2] && p[i + 1] > b[1] && p[i + 1] < b[3]) return true; return false; };
+    const d = p => { let s = ''; for (let i = 0; i < p.length; i += 2) s += (i ? 'L' : 'M') + Math.round(p[i]) + ' ' + Math.round(p[i + 1]); return s; };
+    const net = N.shapes.filter(s => inView(s.p)).map(s => d(s.p)).join('');
+    const kap = O.kapnos.lines.map(l => `<path d="${d(l.p)}"/>`).join('');
+    const lim = O.limassol.lines.map(l => `<path d="${d(l.p)}"/>`).join('');
+    const places = {};
+    [...O.kapnos.stops, ...O.limassol.stops].forEach(s => {
+      const name = s.name === 'Limassol tourist area' ? null : s.name;
+      if (name && !places[name]) places[name] = s;
+    });
+    const anchor = { 'Paphos Airport': ['start', 120, 330], 'Larnaca Airport': ['start', 150, 300], 'Nicosia': ['start', 150, -120], 'Protaras': ['end', -160, -150], 'Ayia Napa': ['end', -150, 320], 'Limassol': ['middle', 0, 340] };
+    const labels = Object.entries(places).map(([n, s]) => {
+      const [a, dx, dy] = anchor[n] || ['start', 150, 0];
+      return `<text x="${s.x + dx}" y="${s.y + dy}" text-anchor="${a}">${n}</text>`;
+    }).join('');
+    const dots = Object.values(places).concat(O.limassol.stops.filter(s => s.name === 'Limassol tourist area'))
+      .map(s => `<circle cx="${s.x}" cy="${s.y}" r="62"/>`).join('');
+    document.getElementById('airportMap').innerHTML =
+      `<svg viewBox="${b[0]} ${b[1]} ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+        <rect x="${b[0]}" y="${b[1]}" width="${w}" height="${h}" rx="90" fill="#EFF6FF"/>
+        <path d="${net}" fill="none" stroke="#C7D7EE" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+        <g fill="none" stroke="#60A5FA" stroke-width="58" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 110">${lim}</g>
+        <g fill="none" stroke="#60A5FA" stroke-width="30" stroke-linecap="round" stroke-linejoin="round">${lim}</g>
+        <g fill="none" stroke="#0A5CFF" stroke-width="44" stroke-linecap="round" stroke-linejoin="round">${kap}</g>
+        <g fill="#fff" stroke="#082E9F" stroke-width="26">${dots}</g>
+        <g font-family="Geist, system-ui, sans-serif" font-size="205" font-weight="700" fill="#0F172A" paint-order="stroke" stroke="#EFF6FF" stroke-width="44" stroke-linejoin="round">${labels}</g>
+      </svg>`;
+  })();
+
+  // BikeStat: estimated rentals by hour of day (real data)
+  const hours = O.bikestat.hourly, hmax = Math.max(...hours);
+  document.getElementById('spark').innerHTML = hours.map(v => `<div style="height:${(v / hmax * 100).toFixed(1)}%"></div>`).join('');
+
+  // Ministry of Finance stop: overall split and route by route (real data)
+  const ov = O.punctuality.overall;
+  document.getElementById('split').innerHTML =
+    `<div style="width:${ov.within}%;background:var(--blue);color:#fff">${Math.round(ov.within)}% on time</div>` +
+    `<div style="width:${ov.late}%;background:var(--blue-soft);color:var(--blue-deep)">${Math.round(ov.late)}% late</div>` +
+    `<div style="width:${ov.early}%;background:var(--blue-pale);color:var(--blue-deep)">${Math.round(ov.early)}%</div>`;
+  document.getElementById('routes').innerHTML = [...O.punctuality.routes].sort((a, b) => b.within - a.within).map(r =>
+    `<div class="prow"><div class="rn">${r.route}</div><div class="pb"><div style="width:${r.early}%;background:var(--blue-pale)"></div><div style="width:${r.within}%;background:var(--blue)"></div><div style="width:${r.late}%;background:var(--blue-soft)"></div></div><b>${Math.round(r.within)}% on time</b></div>`
+  ).join('') + `<div class="fine" style="margin-top:.4mm">${ov.records.toLocaleString('en-US')} GPS-observed passages · early | on time | late · GPS passages are not boarding records</div>`;
+
+  // Route 11 at the same stop: published vs typical observed (real data)
+  const hhmm = s => { const m = Math.round(s / 60); return String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+  const rows = TT.rows.filter(r => r.route_short_name === '11' && r.sufficient_history && r.scheduled_seconds >= 7 * 3600).slice(0, 5);
+  document.getElementById('tt').innerHTML = '<tr><th>Timetable</th><th>Typical</th><th>Usual range</th><th style="text-align:right">Diff, min</th></tr>' +
+    rows.map(r => { const dm = (r.median_seconds - r.scheduled_seconds) / 60; return `<tr><td>${hhmm(r.scheduled_seconds)}</td><td class="hl">${hhmm(r.median_seconds)}</td><td>${hhmm(r.p10_seconds)}–${hhmm(r.p90_seconds)}</td><td class="d">${dm < 0 ? '−' : '+'}${Math.abs(dm).toFixed(1)}</td></tr>`; }).join('');
+
+  // cover map: the real network in white and light blues, fading into the gradient
+  (() => {
+    const pal = { Nicosia: '#ffffff', Limassol: '#dbeafe', Larnaca: '#ffffff', Paphos: '#bfdbfe', Famagusta: '#dbeafe', Intercity: '#93c5fd', 'Airport express': '#ffffff', Other: '#93c5fd' };
+    const cv = document.getElementById('cover'), ctx = cv.getContext('2d');
+    const W = cv.clientWidth, H = cv.clientHeight, k = 4;
+    cv.width = W * k; cv.height = H * k;
+    const s = (W * k) / 5200, ox = -3600 * s, oy = H * k * .1;
+    ctx.setTransform(s, 0, 0, s, ox, oy);
+    ctx.lineJoin = ctx.lineCap = 'round';
+    ctx.globalCompositeOperation = 'lighter';
+    for (const sh of N.shapes) {
+      ctx.beginPath(); ctx.moveTo(sh.p[0], sh.p[1]);
+      for (let i = 2; i < sh.p.length; i += 2) ctx.lineTo(sh.p[i], sh.p[i + 1]);
+      ctx.strokeStyle = pal[sh.a] + '22'; ctx.lineWidth = 9; ctx.stroke();
+      ctx.strokeStyle = pal[sh.a] + 'b0'; ctx.lineWidth = 2.4; ctx.stroke();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const g = ctx.createLinearGradient(0, 0, 0, H * k);
+    g.addColorStop(0, 'rgba(8,46,159,0)'); g.addColorStop(.42, 'rgba(8,46,159,0)'); g.addColorStop(.7, 'rgba(8,46,159,.96)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W * k, H * k);
+  })();
+})();
+</script>
+</body>
+</html>

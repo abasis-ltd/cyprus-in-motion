@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cyprus in Motion — Abasis.AI transport projects</title>
+<meta name="description" content="Twelve Abasis.AI projects that make public transport in Cyprus easier to plan, check and trust: GTFS creation and validation, phone-based tracking, predicted positions, observed timetables and more.">
+<meta name="theme-color" content="#0F172A">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Cyprus in Motion — Abasis.AI">
+<meta property="og:description" content="Better data. Better journeys. Twelve transport projects built in Cyprus — and a game: can you beat the bus timetable?">
+<meta property="og:url" content="https://abasis-ltd.github.io/cyprus-in-motion/">
+<meta property="og:image" content="https://abasis-ltd.github.io/cyprus-in-motion/media/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/abasis-icon.svg">
+<link rel="stylesheet" href="expo.css">
+<style>
+  html { scroll-behavior: smooth; }
+  html, body { height: auto; }
+  body { overflow-x: hidden; }
+  ::selection { background: var(--blue); color: #fff; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+  @media (min-width: 900px) { .wrap { padding: 0 40px; } }
+  h1, h2, h3 { margin: 0; letter-spacing: -.045em; }
+  em { font-style: normal; background: linear-gradient(90deg, #93c5fd, #dbeafe); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  a { text-decoration: none; }
+  .kicker { font-size: 12px; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
+  .kicker::before { content: ""; width: 28px; height: 2px; background: currentColor; }
+  .lede { font-size: clamp(17px, 1.6vw, 21px); line-height: 1.55; color: var(--text-2); margin: 0; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 26px; border-radius: 999px; font-weight: 700; font-size: 16px; letter-spacing: -.01em; transition: transform .15s, box-shadow .2s, background .2s; }
+  .btn:active { transform: scale(.97); }
+  .btn.primary { background: var(--blue); color: #fff; box-shadow: 0 10px 30px rgba(10,92,255,.45); }
+  .btn.primary:hover { background: #2a6dff; box-shadow: 0 14px 40px rgba(10,92,255,.6); }
+  .btn.ghost { color: var(--ink); border: 1.5px solid rgba(248,250,252,.25); }
+  .btn.ghost:hover { border-color: var(--blue-soft); }
+  .btn.small { min-height: 44px; padding: 0 20px; font-size: 15px; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; padding: 7px 13px; border-radius: 99px; background: rgba(147,197,253,.12); color: var(--blue-pale); border: 1px solid rgba(147,197,253,.28); line-height: 1.3; }
+  .pill::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--blue-mid); }
+  .fine { font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--muted); margin: 14px 0 0; }
+  .rv { opacity: 0; transform: translateY(26px); transition: opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); }
+  .rv.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .rv { opacity: 1; transform: none; transition: none; } html { scroll-behavior: auto; } }
+
+  /* nav */
+  .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 30; padding: 10px 0; padding-top: max(10px, env(safe-area-inset-top)); transition: background .3s, backdrop-filter .3s; }
+  .nav.solid { background: rgba(15,23,42,.82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid rgba(248,250,252,.06); }
+  .nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .nav img { height: 38px; margin-left: -8px; display: block; }
+  .nav nav { display: flex; align-items: center; gap: 26px; font-size: 15px; color: var(--text-2); }
+  .nav nav a:hover { color: #fff; }
+  .nav nav .hide-m { display: none; }
+  @media (min-width: 860px) { .nav nav .hide-m { display: inline; } }
+  .nav .btn { min-height: 42px; padding: 0 18px; font-size: 14px; }
+
+  /* hero */
+  .hero { position: relative; min-height: 100svh; display: flex; align-items: flex-end; overflow: hidden; background: radial-gradient(120% 90% at 85% 10%, #0b2a8f 0%, var(--night) 55%); }
+  #hero-map { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .hero::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(15,23,42,0) 35%, rgba(15,23,42,.85) 78%, var(--night) 100%); }
+  @media (min-width: 900px) { .hero { align-items: center; } .hero::after { background: linear-gradient(90deg, rgba(8,46,159,.9) 0%, rgba(8,46,159,.55) 34%, rgba(15,23,42,0) 62%), linear-gradient(180deg, transparent 75%, var(--night) 100%); } }
+  .hero-in { position: relative; z-index: 2; padding-bottom: 48px; padding-top: 120px; width: 100%; }
+  .hero-in > * { max-width: 620px; }
+  .hero h1 { font-size: clamp(60px, 13vw, 128px); line-height: .9; letter-spacing: -.06em; font-weight: 800; margin-bottom: 22px; }
+  .hero .lede { max-width: 560px; margin-bottom: 30px; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 34px; }
+  .hero-stats { display: flex; gap: clamp(22px, 4vw, 48px); flex-wrap: wrap; }
+  .hero-stats b { display: block; font-size: clamp(30px, 4vw, 46px); font-weight: 800; letter-spacing: -.045em; font-variant-numeric: tabular-nums; line-height: 1.05; }
+  .hero-stats span { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--blue-soft); }
+  .scroll-cue { position: absolute; z-index: 3; left: 50%; bottom: 18px; transform: translateX(-50%); width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid rgba(248,250,252,.3); display: none; place-items: center; color: var(--text-2); animation: bob 2s infinite; }
+  @media (min-width: 900px) { .scroll-cue { display: grid; } }
+  @keyframes bob { 50% { transform: translate(-50%, 6px); } }
+
+  section { position: relative; }
+  .band { padding: clamp(72px, 10vw, 130px) 0; }
+  .two { display: grid; gap: 40px; align-items: center; }
+  @media (min-width: 900px) { .two { grid-template-columns: 1fr 1fr; gap: 64px; } }
+  h2.big { font-size: clamp(38px, 5.6vw, 72px); line-height: 1; font-weight: 800; margin-bottom: 20px; }
+
+  /* truth */
+  .truth-card { padding: 28px; border-radius: 22px; background: linear-gradient(160deg, rgba(10,92,255,.16), rgba(15,23,42,.6)); border: 1px solid rgba(147,197,253,.22); }
+  .split { display: flex; height: 56px; border-radius: 12px; overflow: hidden; margin: 6px 0 16px; }
+  .split div { display: flex; align-items: center; padding: 0 8px; font-family: var(--mono); font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; width: 0; transition: width 1.4s cubic-bezier(.2,.7,.2,1); }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; color: var(--text-2); }
+  .legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  .big-facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 26px; }
+  .big-facts b { display: block; font-size: 34px; font-weight: 800; letter-spacing: -.045em; }
+  .big-facts span { font-size: 14px; color: var(--text-2); }
+
+  /* the line overview */
+  .line-strip { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(170px, 1fr); gap: 12px; overflow-x: auto; padding: 6px 2px 18px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+  .line-strip a { scroll-snap-align: start; position: relative; padding: 20px 18px 20px; border-radius: 18px; background: rgba(248,250,252,.04); border: 1px solid rgba(248,250,252,.08); transition: border-color .2s, transform .2s; }
+  .line-strip a:hover { border-color: var(--blue-soft); transform: translateY(-3px); }
+  .line-strip b { display: block; font-family: var(--mono); font-size: 12px; color: var(--blue-soft); letter-spacing: .12em; margin-bottom: 8px; }
+  .line-strip strong { display: block; font-size: 24px; letter-spacing: -.04em; margin-bottom: 6px; }
+  .line-strip span { font-size: 14px; color: var(--text-2); line-height: 1.4; }
+
+  /* chapters + projects */
+  .rail-layout { display: block; }
+  @media (min-width: 1100px) { .rail-layout { display: grid; grid-template-columns: 170px 1fr; gap: 48px; } }
+  .rail { display: none; }
+  @media (min-width: 1100px) { .rail { display: block; position: sticky; top: 110px; height: calc(100vh - 160px); max-height: 560px; } }
+  .rail .track { position: absolute; left: 11px; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: rgba(248,250,252,.12); }
+  .rail .fill { position: absolute; left: 11px; top: 8px; width: 3px; border-radius: 3px; background: linear-gradient(180deg, var(--blue), var(--blue-soft)); height: 0; }
+  .rail a { position: absolute; left: 0; display: flex; align-items: center; gap: 14px; transform: translateY(-50%); color: var(--muted); font-size: 15px; transition: color .2s; }
+  .rail a i { width: 25px; height: 25px; border-radius: 50%; background: var(--night); border: 3px solid rgba(248,250,252,.3); flex: none; transition: all .25s; }
+  .rail a.on { color: #fff; } .rail a.on i { background: var(--blue); border-color: var(--blue-soft); box-shadow: 0 0 0 6px rgba(10,92,255,.25); }
+  .rail a span { font-family: var(--mono); font-size: 11px; color: var(--blue-soft); margin-right: -6px; }
+  .rail .bus { position: absolute; left: -3px; width: 31px; height: 20px; border-radius: 6px; background: #fff; box-shadow: 0 0 18px rgba(147,197,253,.9); transform: translateY(-50%); }
+  .rail .bus::before { content: ""; position: absolute; left: 4px; right: 4px; top: 4px; height: 7px; background: repeating-linear-gradient(90deg, var(--blue) 0 5px, transparent 5px 8px); }
+
+  .chapter { padding-top: 40px; scroll-margin-top: 70px; }
+  .ch-head { display: flex; align-items: flex-end; gap: 18px; margin: 30px 0 28px; flex-wrap: wrap; }
+  .ch-head .n { font-weight: 800; font-size: clamp(64px, 9vw, 120px); line-height: .78; letter-spacing: -.06em; color: transparent; -webkit-text-stroke: 2px rgba(147,197,253,.6); }
+  .ch-head h2 { font-size: clamp(40px, 6vw, 76px); font-weight: 800; line-height: .9; }
+  .ch-head p { flex-basis: 100%; font-size: clamp(17px, 1.6vw, 21px); color: var(--text-2); margin: 6px 0 0; }
+
+  .proj { display: grid; gap: 28px; padding: 30px 22px; border-radius: 26px; margin-bottom: 22px; background: linear-gradient(180deg, rgba(30,41,59,.55), rgba(15,23,42,.55)); border: 1px solid rgba(248,250,252,.08); scroll-margin-top: 80px; }
+  @media (min-width: 900px) { .proj { grid-template-columns: 1fr 1.05fr; gap: 44px; padding: 44px; align-items: start; } .proj.text-only { grid-template-columns: 1fr; } }
+  .proj .who { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--blue-soft); margin: 0 0 12px; }
+  .proj h3 { font-size: clamp(28px, 3.2vw, 40px); font-weight: 800; line-height: 1.02; margin-bottom: 14px; }
+  .proj h3 span { display: block; font-size: 15px; font-weight: 500; letter-spacing: 0; color: var(--muted); margin-top: 8px; font-family: var(--mono); }
+  .proj .one { font-size: clamp(18px, 1.7vw, 22px); line-height: 1.45; margin: 0 0 14px; color: #fff; letter-spacing: -.01em; }
+  .proj .problem { font-size: 16px; line-height: 1.6; color: var(--text-2); margin: 0 0 20px; }
+  .proj .problem b { color: var(--blue-pale); }
+  .steps { list-style: none; padding: 0; margin: 0 0 22px; counter-reset: s; }
+  .steps li { position: relative; padding-left: 42px; margin-bottom: 12px; font-size: 16px; line-height: 1.5; }
+  .steps li::before { counter-increment: s; content: counter(s); position: absolute; left: 0; top: -1px; width: 28px; height: 28px; border-radius: 50%; background: var(--blue); display: grid; place-items: center; font-family: var(--mono); font-size: 13px; font-weight: 600; }
+  .nums { display: flex; flex-wrap: wrap; gap: 18px 30px; margin: 0 0 22px; }
+  .nums b { display: block; font-size: 30px; font-weight: 800; letter-spacing: -.045em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .nums span { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--blue-soft); }
+  .meta { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 4px; }
+  .meta .stack { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .proj .actions { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px; }
+
+  /* media */
+  .media { display: grid; gap: 16px; min-width: 0; }
+  .frame { border-radius: 14px; overflow: hidden; background: #0b1220; box-shadow: 0 24px 60px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08); }
+  .frame .bar { height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 12px; background: #1e293b; }
+  .frame .bar i { width: 9px; height: 9px; border-radius: 50%; background: #475569; }
+  .frame .bar span { margin-left: 10px; flex: 1; height: 18px; border-radius: 9px; background: #0f172a; font-family: var(--mono); font-size: 11px; color: var(--text-2); display: flex; align-items: center; padding-left: 10px; overflow: hidden; white-space: nowrap; }
+  .frame video, .frame img { display: block; width: 100%; height: auto; }
+  .cap { font-family: var(--mono); font-size: 12px; color: var(--blue-soft); }
+  .panel { border-radius: 18px; background: rgba(15,23,42,.85); border: 1px solid rgba(147,197,253,.18); overflow: hidden; }
+  .panel .hd { display: flex; justify-content: space-between; gap: 12px; font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--blue-soft); padding: 13px 16px; border-bottom: 1px solid rgba(147,197,253,.14); }
+  .panel .bd { padding: 16px; }
+  .mini-map svg { display: block; width: 100%; height: auto; }
+  table.t { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  table.t th { text-align: left; font-family: var(--mono); font-weight: 400; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 10px 12px; }
+  table.t td { padding: 9px 12px; border-top: 1px solid rgba(248,250,252,.07); font-size: 15px; }
+  table.t td.hl { font-weight: 700; color: #fff; }
+  table.t td.d { font-family: var(--mono); color: var(--blue-soft); }
+  table.t td.d.big { color: #fff; font-weight: 600; }
+  table.t .rng { font-weight: 400; font-family: var(--mono); font-size: 12px; color: var(--muted); margin-left: 6px; white-space: nowrap; }
+  .race .lane { display: grid; grid-template-columns: 116px 1fr 74px; gap: 12px; align-items: center; margin-bottom: 12px; font-size: 14px; }
+  .race .tr { height: 16px; border-radius: 99px; background: rgba(248,250,252,.08); overflow: hidden; }
+  .race .tr div { height: 100%; width: 0; border-radius: 99px; transition: width 1.6s cubic-bezier(.2,.7,.2,1); }
+  .race b { font-family: var(--mono); font-size: 14px; text-align: right; }
+  .race h4 { margin: 0 0 14px; font-size: 14px; font-weight: 600; color: var(--text-2); }
+  .phone { width: 260px; max-width: 78%; aspect-ratio: 9 / 18.5; margin: 0 auto; border-radius: 34px; border: 8px solid #334155; background: var(--night); box-shadow: 0 30px 70px rgba(0,0,0,.55); overflow: hidden; display: flex; flex-direction: column; }
+  .phone .top { padding: 18px 0 8px; text-align: center; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; color: var(--muted); }
+  .phone .card { margin: 6px 12px; padding: 12px 14px; border-radius: 14px; background: rgba(248,250,252,.07); }
+  .phone .card small { display: block; font-family: var(--mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .phone .card b { font-size: 16px; letter-spacing: -.02em; }
+  .phone .go { margin: 10px 12px; padding: 13px 0; border-radius: 99px; background: var(--blue); text-align: center; font-weight: 700; font-size: 14px; }
+  .phone .log { font-family: var(--mono); font-size: 10px; line-height: 1.9; color: var(--blue-soft); padding: 2px 18px; white-space: pre; }
+  .phone .slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 4px 12px; }
+  .phone .slots span { text-align: center; padding: 9px 0; border-radius: 10px; background: rgba(248,250,252,.07); font-family: var(--mono); font-size: 12px; }
+  .phone .slots span.on { background: var(--blue); font-weight: 600; }
+  .illus { text-align: center; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; color: var(--muted); margin-top: 12px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .feat { padding: 16px; border-radius: 16px; background: rgba(15,23,42,.85); border: 1px solid rgba(147,197,253,.18); }
+  .feat b { display: block; font-size: 16px; letter-spacing: -.02em; margin-bottom: 6px; }
+  .feat span { font-size: 14px; color: var(--text-2); line-height: 1.45; }
+  #ghost { display: block; width: 100%; aspect-ratio: 4 / 3; border-radius: 18px; background: #0b1220; border: 1px solid rgba(147,197,253,.18); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips button { font: inherit; font-size: 15px; font-weight: 700; min-width: 50px; height: 42px; border-radius: 12px; border: 1.5px solid rgba(248,250,252,.18); background: transparent; color: var(--ink); cursor: pointer; }
+  .chips button.on { background: var(--ink); color: var(--on-light); border-color: var(--ink); }
+  .tt-scroll { max-height: 330px; overflow: auto; border-radius: 12px; border: 1px solid rgba(248,250,252,.07); }
+  .tt-scroll thead th { position: sticky; top: 0; background: #111a2e; }
+  .prow { display: grid; grid-template-columns: 46px 1fr 96px; gap: 10px; align-items: center; margin-bottom: 9px; }
+  .prow .rn { height: 30px; border-radius: 8px; background: var(--ink); color: var(--on-light); font-weight: 800; display: grid; place-items: center; font-size: 14px; }
+  .prow .pb { display: flex; height: 30px; border-radius: 8px; overflow: hidden; background: rgba(248,250,252,.06); }
+  .prow .pb div { height: 100%; width: 0; transition: width 1.3s cubic-bezier(.2,.7,.2,1); }
+  .prow b { font-family: var(--mono); font-size: 13px; text-align: right; }
+  .hours { display: flex; align-items: flex-end; gap: 3px; height: 150px; }
+  .hours div { flex: 1; border-radius: 3px 3px 0 0; background: linear-gradient(180deg, var(--blue-soft), var(--blue)); height: 0; transition: height 1s cubic-bezier(.2,.7,.2,1); }
+  .axis { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 16px; }
+  .days div { text-align: center; padding: 8px 0; border-radius: 9px; background: rgba(248,250,252,.06); }
+  .days b { display: block; font-size: 15px; } .days span { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+  .carousel { display: grid; grid-auto-flow: column; grid-auto-columns: 100%; overflow-x: auto; scroll-snap-type: x mandatory; border-radius: 0 0 14px 14px; scrollbar-width: none; }
+  .carousel::-webkit-scrollbar { display: none; }
+  .carousel img { scroll-snap-align: start; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; object-position: top; background: #fff; }
+  .dots { display: flex; gap: 6px; justify-content: center; } .dots i { width: 8px; height: 8px; border-radius: 50%; background: rgba(248,250,252,.25); } .dots i.on { background: var(--blue-soft); }
+  .flow { display: grid; gap: 10px; }
+  .flow div { display: grid; grid-template-columns: 44px 1fr; gap: 14px; align-items: center; padding: 14px 16px; border-radius: 16px; background: rgba(15,23,42,.85); border: 1px solid rgba(147,197,253,.18); }
+  .flow i { width: 44px; height: 44px; border-radius: 12px; background: var(--blue); display: grid; place-items: center; font-style: normal; font-family: var(--mono); font-weight: 600; }
+  .flow b { display: block; font-size: 16px; letter-spacing: -.02em; } .flow span { font-size: 14px; color: var(--text-2); }
+  .ring { position: relative; width: 100%; max-width: 420px; aspect-ratio: 1; margin: 0 auto; }
+  .ring .core { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 34%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--blue), var(--blue-deep)); display: grid; place-items: center; text-align: center; font-weight: 800; font-size: clamp(14px, 2.4vw, 20px); letter-spacing: -.03em; box-shadow: 0 0 60px rgba(10,92,255,.5); }
+  .ring .mod { position: absolute; transform: translate(-50%, -50%); width: 36%; padding: 10px 8px; border-radius: 12px; background: rgba(15,23,42,.94); border: 1px solid rgba(147,197,253,.3); text-align: center; font-size: clamp(12px, 1.7vw, 14px); font-weight: 600; line-height: 1.25; }
+  .ring svg { position: absolute; inset: 0; }
+
+  /* play + show + contact */
+  .play-card { display: grid; gap: 36px; align-items: center; padding: clamp(28px, 5vw, 64px); border-radius: 32px; background: radial-gradient(120% 140% at 0% 0%, var(--blue) 0%, var(--blue-deep) 55%, #0b1a5c 100%); overflow: hidden; position: relative; }
+  @media (min-width: 900px) { .play-card { grid-template-columns: 1.2fr 1fr; } }
+  .play-card h2 { font-size: clamp(46px, 7vw, 96px); font-weight: 800; line-height: .9; letter-spacing: -.06em; margin-bottom: 18px; }
+  .play-card .lede { color: #dbeafe; margin-bottom: 28px; max-width: 520px; }
+  .play-card .btn.primary { background: #fff; color: var(--blue-deep); box-shadow: 0 14px 40px rgba(0,0,0,.3); }
+  .play-side { display: flex; gap: 22px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  @media (max-width: 759px) { .qrbox { display: none !important; } }
+  .qrbox { background: #fff; color: var(--on-light); border-radius: 22px; padding: 16px 16px 12px; text-align: center; width: 210px; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+  .qrbox img { width: 100%; display: block; }
+  .qrbox b { display: block; font-size: 15px; margin-top: 6px; } .qrbox span { font-family: var(--mono); font-size: 11px; color: #475569; }
+  .show-card { display: grid; gap: 28px; align-items: center; }
+  @media (min-width: 900px) { .show-card { grid-template-columns: 1fr 1.2fr; } }
+  .show-card .frame img { aspect-ratio: 16 / 9; object-fit: cover; }
+  .contact { text-align: center; }
+  .contact h2 { font-size: clamp(42px, 7vw, 96px); line-height: .95; font-weight: 800; letter-spacing: -.06em; margin-bottom: 22px; }
+  .contact .lede { max-width: 640px; margin: 0 auto 32px; }
+  .contact .cta-row { justify-content: center; }
+  footer.site { padding: 48px 0 calc(48px + env(safe-area-inset-bottom)); border-top: 1px solid rgba(248,250,252,.08); }
+  footer.site .wrap { display: grid; gap: 22px; }
+  @media (min-width: 900px) { footer.site .wrap { grid-template-columns: auto 1fr; align-items: start; gap: 60px; } }
+  footer.site img { height: 40px; margin-left: -8px; }
+  footer.site p { margin: 0 0 8px; font-size: 13px; line-height: 1.65; color: var(--muted); }
+  footer.site a { color: var(--blue-soft); }
+</style>
+</head>
+<body>
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a href="#top"><img src="assets/abasis-logo-white.svg" alt="Abasis.AI"></a>
+    <nav>
+      <a class="hide-m" href="#projects">Projects</a>
+      <a class="hide-m" href="#understand">Results</a>
+      <a class="hide-m" href="show/">Expo show</a>
+      <a class="btn primary" href="play/">Play the game</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero" id="top">
+  <canvas id="hero-map" aria-hidden="true"></canvas>
+  <div class="wrap hero-in">
+    <p class="kicker">Abasis.AI · Mobility Lab · Nicosia</p>
+    <h1>Cyprus<br>in <em>motion.</em></h1>
+    <p class="lede">We build the data tools that make public transport easier to plan, check and trust — from timetable files to live tracking and evidence-based schedules.</p>
+    <div class="cta-row">
+      <a class="btn primary" href="play/">▶&nbsp; Play Beat the Bus</a>
+      <a class="btn ghost" href="#projects">Explore 12 projects</a>
+    </div>
+    <div class="hero-stats">
+      <div><b data-count="860">860</b><span>bus routes</span></div>
+      <div><b data-count="5249">5,249</b><span>stops</span></div>
+      <div><b>51.7M</b><span>GPS positions</span></div>
+    </div>
+  </div>
+  <a class="scroll-cue" href="#truth" aria-label="Scroll down">↓</a>
+</section>
+
+<section class="band" id="truth">
+  <div class="wrap two">
+    <div class="rv">
+      <p class="kicker">One stop · eight Mondays</p>
+      <h2 class="big">The timetable says 07:00. <em>The bus says…</em></h2>
+      <p class="lede">At the Ministry of Finance stop in Nicosia we compared 1,174 GPS-observed passages with the published times. Since 21 July 2026 we have archived every public bus in Cyprus, every 30 seconds.</p>
+    </div>
+    <div class="truth-card rv" id="truth-card"></div>
+  </div>
+</section>
+
+<section class="band" style="padding-top:0">
+  <div class="wrap">
+    <p class="kicker rv">How we work</p>
+    <h2 class="big rv">Six stops. <em>One line.</em></h2>
+    <div class="line-strip rv" id="line-strip"></div>
+  </div>
+</section>
+
+<section id="projects">
+  <div class="wrap rail-layout">
+    <aside class="rail" id="rail"><div class="track"></div><div class="fill"></div><div class="bus"></div></aside>
+    <div id="chapters"></div>
+  </div>
+</section>
+
+<section class="band" id="play">
+  <div class="wrap">
+    <div class="play-card rv">
+      <div>
+        <p class="kicker" style="color:#dbeafe">Your turn · 60 seconds</p>
+        <h2>Beat the<br>Bus.</h2>
+        <p class="lede">Five real Nicosia buses. Guess when each one actually reached the stop — and see if you can beat the official timetable.</p>
+        <a class="btn primary" href="play/">Play now</a>
+      </div>
+      <div class="play-side">
+        <div class="qrbox"><img src="assets/qr-play.svg" alt="QR code for the game"><b>On a computer?</b><span>Scan to play on your phone</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" style="padding-top:0">
+  <div class="wrap show-card">
+    <div class="rv">
+      <p class="kicker">At the stand</p>
+      <h2 class="big">The expo show.</h2>
+      <p class="lede" style="margin-bottom:26px">The looping presentation from our stand: every project in eight minutes, drawn on a live map of the island. Opens full-screen in your browser.</p>
+      <a class="btn ghost" href="show/">Watch the show ↗</a>
+    </div>
+    <a class="frame rv" href="show/" aria-label="Open the expo show"><div class="bar"><i></i><i></i><i></i><span>Cyprus in Motion · expo show</span></div><img src="media/og.jpg" alt="A frame of the expo show: the Cyprus bus network map" loading="lazy"></a>
+  </div>
+</section>
+
+<section class="band contact" id="contact">
+  <div class="wrap rv">
+    <p class="kicker" style="justify-content:center">Abasis.AI · Nicosia, Cyprus</p>
+    <h2>Bring your routes.<br><em>Let’s make them clearer.</em></h2>
+    <p class="lede">Timetable files, validation, phone-based tracking pilots and evidence-based schedules — for operators, cities, schools and tour companies.</p>
+    <div class="cta-row">
+      <a class="btn primary" href="https://abasis-transit.abasis-6196.chatgpt.site/#request" target="_blank" rel="noopener">Request a transit-data review ↗</a>
+      <a class="btn ghost" href="https://abasis.ai" target="_blank" rel="noopener">abasis.ai ↗</a>
+      <a class="btn ghost" href="https://gtfs.guru" target="_blank" rel="noopener">gtfs.guru ↗</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="wrap">
+    <img src="assets/abasis-logo-white.svg" alt="Abasis.AI">
+    <div>
+      <p>Facts and figures come from the projects’ own repositories, feeds and evaluation reports as of 27 October 2026. Prototypes, plans and proposals are labelled as such; no deployment, contract or partnership is implied.</p>
+      <p>Map: route shapes and stops from the public GTFS feeds of Cyprus’s seven bus operators (Motion Bus Card open data). Observed times are GPS-inferred passages, not boarding records. Predicted positions are estimates, never presented as measured GPS.</p>
+      <p>© 2026 Abasis.AI · <a href="https://abasis.ai">abasis.ai</a> · <a href="https://gtfs.guru">gtfs.guru</a></p>
+    </div>
+  </div>
+</footer>
+
+<noscript><p style="text-align:center;padding:20px">This page needs JavaScript to draw the map and project details.</p></noscript>
+<script src="data/network.js"></script>
+<script src="data/overlays.js"></script>
+<script src="data/timetable.js"></script>
+<script src="data/projects.js"></script>
+<script src="map.js"></script>
+<script>
+(() => {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  const O = window.OVERLAYS, TT = window.TIMETABLE, CH = window.CHAPTERS, PROJECTS = window.PROJECTS;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const hhmm = s => { const m = Math.round(s / 60); return String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+  // ---------- hero map ----------
+  const mobile = innerWidth < 760;
+  const hero = createMap($('#hero-map'), window.NETWORK, { buses: mobile ? 220 : 460, maxDpr: 1.5 });
+  let heroCam, heroVisible = true;
+  const fitHero = () => {
+    hero.resize();
+    const b = hero.bounds.island, { W, H } = hero.size();
+    heroCam = W / H > 1.15 ? hero.fit(b, { left: .5, right: .99, top: .18, bottom: .86 }) : hero.fit(b, { left: .02, right: .98, top: .06, bottom: .3 });
+  };
+  const t0 = performance.now();
+  // resizing a canvas clears it, so redraw straight away (also covers phone rotation)
+  fitHero(); addEventListener('resize', () => { fitHero(); drawHero(performance.now(), true); });
+  function drawHero(now, once) {
+    const t = reduce ? 1e9 : now - t0;
+    hero.draw({ cam: heroCam, tau: t / 1000, time: t, reveal: Math.min(1, t / 2600), busAlpha: Math.min(1, Math.max(0, (t - 2200) / 1000)) });
+    if (!once && heroVisible && !reduce) requestAnimationFrame(t => drawHero(t));
+  }
+  new IntersectionObserver(([e]) => { const was = heroVisible; heroVisible = e.isIntersecting; if (heroVisible && !was) requestAnimationFrame(t => drawHero(t)); }).observe($('.hero'));
+  requestAnimationFrame(t => drawHero(t));
+  addEventListener('scroll', () => $('#nav').classList.toggle('solid', scrollY > 40), { passive: true });
+
+  // ---------- truth card ----------
+  const ov = O.punctuality.overall;
+  $('#truth-card').innerHTML = `
+    <p class="kicker" style="margin-bottom:10px">Ministry of Finance stop · Nicosia</p>
+    <div class="split"><div data-w="${ov.within}" style="background:var(--blue);color:#fff">${Math.round(ov.within)}% on time</div><div data-w="${ov.late}" style="background:var(--blue-soft);color:var(--on-light)">${Math.round(ov.late)}%</div><div data-w="${ov.early}" style="background:var(--blue-pale);color:var(--on-light)">${Math.round(ov.early)}%</div></div>
+    <div class="legend"><span><i style="background:var(--blue)"></i>−1 to +5 min</span><span><i style="background:var(--blue-soft)"></i>over 5 min late</span><span><i style="background:var(--blue-pale)"></i>over 1 min early</span></div>
+    <div class="big-facts"><div><b>${ov.median.toFixed(1)} min</b><span>median delay</span></div><div><b>51.7M</b><span>GPS positions archived since July</span></div><div><b>11.9M</b><span>stop passages rebuilt</span></div><div><b>98</b><span>service days observed</span></div></div>
+    <p class="fine">Eight autumn Mondays, 7 Sept – 26 Oct 2026. GPS passages are not boarding records.</p>`;
+
+  // ---------- line overview ----------
+  const shortLine = ['Spreadsheet → standard feed', 'Errors caught before riders see them', 'Live buses from a phone', 'Fill the GPS gaps', 'What really happens', 'Cars, bikes, exams & AI'];
+  $('#line-strip').innerHTML = CH.map((c, i) => `<a href="#${c.id}"><b>${c.n}</b><strong>${c.title}</strong><span>${shortLine[i]}</span></a>`).join('');
+
+  // ---------- media per project ----------
+  const svgOf = (feed, stroke = 56, r = 70) => {
+    const pts = feed.lines.flatMap(l => l.p), xs = pts.filter((_, i) => i % 2 === 0), ys = pts.filter((_, i) => i % 2 === 1);
+    const b = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)], pad = 220, w = b[2] - b[0] + pad * 2, h = b[3] - b[1] + pad * 2;
+    const d = l => { let s = ''; for (let i = 0; i < l.p.length; i += 2) s += (i ? 'L' : 'M') + (l.p[i] - b[0] + pad) + ' ' + (l.p[i + 1] - b[1] + pad); return s; };
+    return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Route map"><g fill="none" stroke-linecap="round" stroke-linejoin="round">${feed.lines.map(l => `<path d="${d(l)}" stroke="rgba(147,197,253,.3)" stroke-width="${stroke * 2.6}"/><path d="${d(l)}" stroke="#fff" stroke-width="${stroke}"/>`).join('')}</g>
+      ${feed.stops.map(s => `<circle cx="${s.x - b[0] + pad}" cy="${s.y - b[1] + pad}" r="${r}" fill="#0a5cff" stroke="#fff" stroke-width="${r * .35}"/><text x="${s.x - b[0] + pad}" y="${s.y - b[1] + pad - r * 2}" fill="#dbeafe" font-family="Geist, sans-serif" font-weight="600" font-size="${r * 3.2}" text-anchor="middle">${esc(s.name)}</text>`).join('')}</svg>`;
+  };
+  const frame = (url, inner) => `<div class="frame"><div class="bar"><i></i><i></i><i></i><span>${url}</span></div>${inner}</div>`;
+  const MEDIA = {
+    kapnos: () => {
+      const rows = O.kapnos.sample.departures.filter(r => r.dep >= '07:00').slice(0, 8);
+      return `${frame('Transit Editor', `<video src="media/gtfs-editor-sm.mp4" poster="media/gtfs-editor-poster.jpg" muted loop playsinline preload="none" data-auto></video>`)}
+        <div class="cap">Real capture: the editor with the Kapnos Airport Shuttle routes, timetable grid and health check</div>
+        <div class="panel mini-map"><div class="hd"><span>Kapnos Airport Shuttle · 4 routes</span><span>real shapes</span></div><div class="bd">${svgOf(O.kapnos)}</div></div>
+        <div class="panel"><div class="hd"><span>R1 Nicosia → Larnaca Airport</span><span>Mon 6 Jul 2026</span></div>
+        <table class="t"><thead><tr><th>Depart</th><th>Arrive</th><th>Stop</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.dep}</td><td class="hl">${r.arr}</td><td>LCA</td></tr>`).join('')}</tbody></table></div>`;
+    },
+    limassol: () => `<div class="panel mini-map"><div class="hd"><span>L1 · L2 airport shuttles</span><span>real shapes</span></div><div class="bd">${svgOf(O.limassol, 46, 60)}</div></div>`,
+    guru: () => `${frame('gtfs.guru', `<video src="media/gtfs-guru-sm.mp4" poster="media/gtfs-guru-poster.jpg" muted loop playsinline preload="none" data-auto></video>`)}
+      <div class="cap">Real capture: gtfs.guru validating its demo feed in the browser</div>
+      <div class="panel race" data-race><div class="bd"><h4>Netherlands national feed · 16.0M stop-time rows</h4>
+        <div class="lane"><span>GTFS Guru</span><div class="tr"><div data-w="${(9.75 / 65.18 * 100).toFixed(1)}" style="background:linear-gradient(90deg,var(--blue),var(--blue-soft))"></div></div><b>9.75 s</b></div>
+        <div class="lane"><span>Java 8.0.1</span><div class="tr"><div data-w="100" style="background:var(--muted)"></div></div><b>65.18 s</b></div>
+        <h4 style="margin-top:18px">MBTA · 5.4M rows</h4>
+        <div class="lane"><span>GTFS Guru</span><div class="tr"><div data-w="${(2.32 / 10.6 * 100).toFixed(1)}" style="background:linear-gradient(90deg,var(--blue),var(--blue-soft))"></div></div><b>2.32 s</b></div>
+        <div class="lane"><span>Java 8.0.1</span><div class="tr"><div data-w="100" style="background:var(--muted)"></div></div><b>10.60 s</b></div>
+      </div></div>
+      ${frame('GTFS Guru desktop app', `<img src="media/guru-desktop.jpg" alt="GTFS Guru desktop app: validation complete with an error map" loading="lazy">`)}`,
+    schoolbus: p => `<div class="phone"><div class="top">DRIVER APP</div><div class="card"><small>Vehicle</small><b>Bus 3</b></div><div class="card"><small>Route</small><b>Morning run · 14 stops</b></div><div class="go">● Trip in progress</div><div class="log" id="ph-log"></div></div>
+      <div class="illus">ILLUSTRATION OF THE DRIVER FLOW</div>
+      <div class="grid2">${p.next.map((f, i) => `<div class="feat"><b>${f}</b><span>${['Route-scoped access for each family', 'Exact school locations stay protected', 'History kept only as long as needed', 'Start small, measure, then scale'][i]}</span></div>`).join('')}</div>`,
+    shadow: () => `<canvas id="ghost" aria-label="Animation: a bus loses GPS and the model keeps estimating its position along the route"></canvas><div class="cap">White = measured GPS · dashed blue = model estimate while the signal is lost (illustration on a real Nicosia route)</div>`,
+    timetable: () => {
+      const routes = [...new Set(TT.rows.filter(r => r.sufficient_history).map(r => r.route_short_name))].sort((a, b) => a - b);
+      const punct = [...O.punctuality.routes].sort((a, b) => b.within - a.within);
+      return `<div class="panel" id="understand-explorer"><div class="hd"><span>Ministry of Finance stop · typical Monday</span><span>pick a route</span></div><div class="bd">
+          <div class="chips" style="margin-bottom:14px">${routes.map(r => `<button data-route="${r}" class="${r === '11' ? 'on' : ''}">${r}</button>`).join('')}</div>
+          <div class="tt-scroll"><table class="t"><thead><tr><th>Timetable</th><th>Typical · usual range</th><th style="text-align:right">Δ min</th></tr></thead><tbody id="tt-body"></tbody></table></div>
+          <p class="fine">Typical = median of GPS-observed passages over eight autumn Mondays · range = 10th–90th percentile.</p></div></div>
+        <div class="panel"><div class="hd"><span>On time at this stop, by route</span><span>early · on time · late</span></div><div class="bd">
+          ${punct.map(r => `<div class="prow"><div class="rn">${r.route}</div><div class="pb"><div data-w="${r.early}" style="background:var(--blue-pale)"></div><div data-w="${r.within}" style="background:var(--blue)"></div><div data-w="${r.late}" style="background:var(--blue-soft)"></div></div><b>${Math.round(r.within)}% on time</b></div>`).join('')}
+        </div></div>
+        <div class="panel race" data-race><div class="bd"><h4>Mean arrival error · 260,000 held-out arrivals</h4>
+          <div class="lane"><span>Timetable</span><div class="tr"><div data-w="100" style="background:var(--muted)"></div></div><b>4.94 min</b></div>
+          <div class="lane"><span>History</span><div class="tr"><div data-w="75.2" style="background:var(--blue-mid)"></div></div><b>3.71 min</b></div>
+          <div class="lane"><span>Our model</span><div class="tr"><div data-w="74.3" style="background:var(--blue)"></div></div><b>3.67 min</b></div></div></div>
+        <a class="frame" href="media/timetable-pdf-1.jpg" target="_blank" rel="noopener"><div class="bar"><i></i><i></i><i></i><span>Printable stop timetable · PDF page 1</span></div><img src="media/timetable-pdf-1.jpg" alt="Printable timetable for the Ministry of Finance stop" loading="lazy" style="aspect-ratio:16/10;object-fit:cover;object-position:top"></a>`;
+    },
+    motorist: () => `${frame('Cyprus Motorist Hub · demo mode', `<video src="media/motorist-hub-sm.mp4" poster="media/motorist-hub-poster.jpg" muted loop playsinline preload="none" data-auto></video>`)}<div class="cap">Real capture · demo data is synthetic</div>${frame('More screens', `<div class="carousel" id="mh-carousel">${['road-map', 'official-actions', 'cost-tools', 'data-sources', 'dashboard'].map(n => `<img src="media/motorist-${n}.jpg" alt="Cyprus Motorist Hub: ${n.replace('-', ' ')}${n === 'dashboard' ? ' (Greek interface)' : ''}" loading="lazy">`).join('')}</div>`)}<div class="dots" id="mh-dots">${[0, 1, 2, 3, 4].map(i => `<i class="${i ? '' : 'on'}"></i>`).join('')}</div><div class="cap" style="text-align:center">Swipe · real screens in EN · EL · RU · demo values are synthetic</div>`,
+    bikestat: () => {
+      const max = Math.max(...O.bikestat.hourly);
+      return `${frame('BikeStat · Nextbike Cyprus rentals', `<video src="media/bikestat-sm.mp4" poster="media/bikestat-poster.jpg" muted loop playsinline preload="none" data-auto></video>`)}<div class="cap">Real capture: the BikeStat dashboard</div>
+        <div class="panel"><div class="hd"><span>Estimated rentals by hour</span><span>15–24 Jun 2026</span></div><div class="bd">
+        <div class="hours" data-hours>${O.bikestat.hourly.map(v => `<div data-h="${(v / max * 100).toFixed(1)}" title="${v}"></div>`).join('')}</div>
+        <div class="axis"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>
+        <div class="days">${O.bikestat.daily.map(d => `<div><b>${d.rentals}</b><span>${d.day.split(' ')[0]}</span></div>`).join('')}</div>
+        <p class="fine">Estimated from the public Nextbike Cyprus feed: a bike that disappears between one-minute snapshots counts as a pickup.</p></div></div>`;
+    },
+    busrider: p => `${frame('BusRider', `<video src="media/busrider-sm.mp4" poster="media/busrider-poster.jpg" muted loop playsinline preload="none" data-auto></video>`)}<div class="cap">Real capture of the booking app (sample exam data)</div><div class="flow">${p.steps.map((s, i) => `<div><i>${i + 1}</i><span><b>${['Pick your exam', 'Your pickup point', 'Pay securely', 'Routes plan themselves'][i]}</b><span>${s}</span></span></div>`).join('')}</div>`,
+    zelo: () => `<div class="phone"><div class="top">BOOK A PICKUP</div><div class="card"><small>Identity</small><b>Verified ✓</b></div><div class="card"><small>Pickup · today</small><b>Choose a 30-min slot</b></div><div class="slots">${['10:00', '10:30', '11:00', '11:30', '12:00', '12:30'].map((s, i) => `<span class="${i === 3 ? 'on' : ''}">${s}</span>`).join('')}</div><div class="card"><small>Wallet</small><b>Top up with Stripe</b></div><div class="go">Book slot</div></div><div class="illus">ILLUSTRATION OF THE BOOKING FLOW</div>`,
+    cytransit: p => `<div class="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="36" fill="none" stroke="rgba(147,197,253,.35)" stroke-width=".4" stroke-dasharray="1.2 1.2"/></svg><div class="core">CyTransit<br>AI</div>${p.steps.map((s, i) => { const a = -Math.PI / 2 + i * Math.PI / 3; return `<div class="mod" style="left:${50 + 36 * Math.cos(a)}%;top:${50 + 36 * Math.sin(a)}%">${s}</div>`; }).join('')}</div>`
+  };
+
+  // ---------- chapters + project cards ----------
+  const card = p => {
+    const media = MEDIA[p.id] ? MEDIA[p.id](p) : '';
+    const showSteps = p.id !== 'cytransit';
+    return `<article class="proj rv ${media ? '' : 'text-only'}" id="p-${p.id}">
+      <div>
+        <p class="who">${esc(p.who)}</p>
+        <h3>${esc(p.name)}<span>${esc(p.sub)}</span></h3>
+        <p class="one">${esc(p.one)}</p>
+        ${p.problem ? `<p class="problem"><b>The problem.</b> ${esc(p.problem)}</p>` : ''}
+        ${showSteps ? `<ol class="steps">${p.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>` : `<p class="problem">Six modules, from demand to decisions: ${p.steps.map(esc).join(' · ')}.</p>`}
+        ${p.numbers ? `<div class="nums">${p.numbers.map(([v, l]) => `<div><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join('')}</div>` : ''}
+        <div class="meta"><span class="pill">${esc(p.status)}</span>${p.stack ? `<span class="stack">${esc(p.stack)}</span>` : ''}</div>
+        ${p.note ? `<p class="fine">${esc(p.note)}</p>` : ''}
+        ${p.link ? `<div class="actions"><a class="btn primary small" href="${p.link}" target="_blank" rel="noopener">Open ${p.link.replace('https://', '')} ↗</a></div>` : ''}
+      </div>
+      ${media ? `<div class="media">${media}</div>` : ''}
+    </article>`;
+  };
+  $('#chapters').innerHTML = CH.map(c => `<section class="chapter" id="${c.id}">
+      <header class="ch-head rv"><span class="n">${c.n}</span><h2>${c.title}</h2><p>${c.line}</p></header>
+      ${PROJECTS.filter(p => p.chapter === c.id).map(card).join('')}
+    </section>`).join('');
+
+  if (location.hash) { const target = document.getElementById(location.hash.slice(1)); if (target) setTimeout(() => target.scrollIntoView(), 60); }
+
+  // rail with a bus that follows the scroll through the chapters
+  const rail = $('#rail');
+  CH.forEach((c, i) => rail.insertAdjacentHTML('beforeend', `<a href="#${c.id}" style="top:${8 + i * 19}%"><i></i><span>${c.n}</span>${c.title}</a>`));
+  const railLinks = [...rail.querySelectorAll('a')], railBus = rail.querySelector('.bus'), railFill = rail.querySelector('.fill');
+  const chapterEls = CH.map(c => document.getElementById(c.id));
+  const onScroll = () => {
+    const mid = innerHeight * .4;
+    let pos = 0;
+    chapterEls.forEach((el, i) => {
+      const r = el.getBoundingClientRect();
+      if (r.top <= mid) pos = i + Math.min(1, Math.max(0, (mid - r.top) / r.height)) * .999;
+    });
+    const k = Math.min(5, pos);
+    const y = 8 + k * 19;
+    railBus.style.top = y + '%'; railFill.style.height = (k * 19) + '%';
+    railLinks.forEach((a, i) => a.classList.toggle('on', Math.floor(Math.min(5.999, pos)) === i && pos > 0));
+  };
+  addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+  // ---------- reveal + data animations on view ----------
+  const io = new IntersectionObserver(entries => entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const el = e.target; el.classList.add('in');
+    el.querySelectorAll('[data-w]').forEach(b => b.style.width = b.dataset.w + '%');
+    el.querySelectorAll('[data-h]').forEach(b => b.style.height = b.dataset.h + '%');
+    io.unobserve(el);
+  }), { threshold: .14 });
+  document.querySelectorAll('.rv, .truth-card, .panel').forEach(el => io.observe(el));
+  // videos play only while visible
+  const vio = new IntersectionObserver(entries => entries.forEach(e => { const v = e.target; if (e.isIntersecting) { v.preload = 'auto'; v.play().catch(() => {}); } else v.pause(); }), { threshold: .35 });
+  document.querySelectorAll('video[data-auto]').forEach(v => vio.observe(v));
+
+  // ---------- small live demos ----------
+  const log = $('#ph-log');
+  if (log) { let n = 0; setInterval(() => { const lines = []; for (let k = n; k > n - 6 && k >= 0; k--) { const s = 7 * 3600 + 41 * 60 + k * 5; lines.push(`${hhmm(s)}:${String(s % 60).padStart(2, '0')}  position sent ✓`); } log.textContent = lines.join('\n'); n++; }, 1500); }
+
+  const gc = $('#ghost');
+  if (gc) {
+    const g = createMap(gc, window.NETWORK, { buses: 90, maxDpr: 2 });
+    const MOF = O.places.mof, si = g.nicosiaShape(MOF);
+    let cam, visible = false;
+    const fitG = () => { g.resize(); cam = g.fit(g.lineBounds(si), { left: .1, right: .7, top: .12, bottom: .88 }); };
+    fitG(); addEventListener('resize', () => { fitG(); drawFrame(performance.now()); });
+    function drawFrame(now) { g.draw({ cam, tau: now / 1000 * .3, time: now, focus: 'Nicosia', dim: .25, busAlpha: .35, ghost: { si, phase: Math.min(1, (now / 11000) % 1.15) } }); }
+    const loop = now => { drawFrame(now); if (visible && !reduce) requestAnimationFrame(loop); };
+    new IntersectionObserver(([e]) => { const was = visible; visible = e.isIntersecting; if (visible && !was) requestAnimationFrame(loop); }).observe(gc);
+    drawFrame(4500);
+  }
+
+  const body = $('#tt-body');
+  if (body) {
+    const show = route => {
+      const rows = TT.rows.filter(r => r.route_short_name === route && r.sufficient_history);
+      body.innerHTML = rows.map(r => { const d = (r.median_seconds - r.scheduled_seconds) / 60; return `<tr><td>${hhmm(r.scheduled_seconds)}</td><td class="hl">${hhmm(r.median_seconds)} <small class="rng">${hhmm(r.p10_seconds)}–${hhmm(r.p90_seconds)}</small></td><td class="d ${Math.abs(d) >= 5 ? 'big' : ''}" style="text-align:right">${d < 0 ? '−' : '+'}${Math.abs(d).toFixed(1)}</td></tr>`; }).join('');
+    };
+    show('11');
+    document.querySelectorAll('[data-route]').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('[data-route]').forEach(x => x.classList.toggle('on', x === b)); show(b.dataset.route);
+    }));
+  }
+
+  const car = $('#mh-carousel');
+  if (car) car.addEventListener('scroll', () => { const i = Math.round(car.scrollLeft / car.clientWidth); document.querySelectorAll('#mh-dots i').forEach((d, k) => d.classList.toggle('on', k === i)); }, { passive: true });
+})();
+</script>
+</body>
+</html>

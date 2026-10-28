@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Beat the Bus — Abasis.AI</title>
+<meta name="description" content="Guess when five real Nicosia buses actually arrived — and see if you can beat the official timetable. A 60-second game built on GPS-observed bus data by Abasis.AI.">
+<meta name="theme-color" content="#0F172A">
+<link rel="icon" href="../assets/abasis-icon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://abasis-ltd.github.io/cyprus-in-motion/play/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Abasis.AI · Cyprus in Motion">
+<meta property="og:title" content="Beat the Bus — can you beat the Nicosia bus timetable?">
+<meta property="og:description" content="Five real buses, 60 seconds. Guess when they actually reached the stop, using GPS-observed data from Nicosia.">
+<meta property="og:url" content="https://abasis-ltd.github.io/cyprus-in-motion/play/">
+<meta property="og:image" content="https://abasis-ltd.github.io/cyprus-in-motion/media/og-play.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../expo.css">
+<style>
+  /* Mobile first: a phone in portrait is the main target (visitors scan the QR code). */
+  :root { --pad: 18px; --sh: 204px; --ax: 132px; --inset: 34px; }
+  html { -webkit-text-size-adjust: 100%; }
+  html, body { height: auto; min-height: 100%; }
+  body {
+    min-height: 100vh; min-height: 100dvh; overflow-x: hidden; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    background: radial-gradient(140% 70% at 50% -12%, var(--blue-deep) 0%, rgba(8,46,159,.55) 30%, var(--night) 68%) no-repeat, var(--night);
+  }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--blue-soft); outline-offset: 3px; }
+
+  .screen { display: none; min-height: 100vh; min-height: 100dvh;
+    padding: calc(env(safe-area-inset-top) + 14px) calc(env(safe-area-inset-right) + var(--pad)) calc(env(safe-area-inset-bottom) + 18px) calc(env(safe-area-inset-left) + var(--pad)); }
+  .screen.on { display: flex; flex-direction: column; animation: rise .45s cubic-bezier(.2,.7,.2,1); }
+  @keyframes rise { from { opacity: 0; transform: scale(.985); } } /* no translate: it would add scroll height mid-animation */
+  .wrap { width: 100%; max-width: 560px; margin: 0 auto; flex: 1; display: flex; flex-direction: column; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 999px; border: 0; font-weight: 700; font-size: 17px; letter-spacing: -.01em; cursor: pointer; text-decoration: none; transition: transform .12s, background .2s; user-select: none; -webkit-user-select: none; }
+  .btn:active { transform: scale(.97); }
+  .btn.primary { background: var(--blue); color: #fff; box-shadow: 0 10px 30px rgba(10,92,255,.38); }
+  .btn.primary:hover { background: #1f6bff; }
+  .btn.ghost { background: rgba(248,250,252,.06); color: var(--ink); border: 1px solid rgba(248,250,252,.16); }
+  .btn.big { min-height: 58px; font-size: 19px; width: 100%; }
+  .kicker { font-size: 11.5px; }
+  .fine { font-family: var(--mono); font-size: 11px; line-height: 1.6; color: var(--muted); margin: 12px 0 0; }
+  .small { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--blue-soft); }
+
+  /* ---------- start ---------- */
+  .brandbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brandbar .logo { height: 40px; margin-left: -8px; }
+  .brandbar .kicker { font-size: 10.5px; text-align: right; }
+  .hero h1 { font-weight: 800; font-size: clamp(64px, 19vw, 168px); line-height: .88; letter-spacing: -.065em; margin: 6vh 0 18px; }
+  .hero h1 em { font-style: normal; background: linear-gradient(90deg, #93c5fd, #dbeafe); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lede { font-size: 17px; line-height: 1.5; color: var(--text-2); margin: 0 0 18px; max-width: 34em; }
+  .how { list-style: none; padding: 0; margin: 0; display: flex; gap: 8px; flex-wrap: wrap; }
+  .how li { font-size: 14px; padding: 8px 12px; border-radius: 12px; background: rgba(248,250,252,.06); border: 1px solid rgba(248,250,252,.1); color: var(--text-2); }
+  .how b { color: #fff; font-weight: 800; margin-right: 4px; }
+  .road { position: relative; height: 84px; margin: 3vh 0 2vh; overflow: hidden; }
+  .road::before { content: ""; position: absolute; left: 0; right: 0; top: 62px; height: 6px; border-radius: 6px; background: repeating-linear-gradient(90deg, #334155 0 22px, transparent 22px 36px); }
+  .rollbus { position: absolute; top: 4px; left: -120px; animation: drive 7s linear infinite; }
+  @keyframes drive { to { left: 100%; } }
+  .board-card { border-radius: 18px; padding: 16px 18px; background: rgba(15,23,42,.72); border: 1px solid rgba(147,197,253,.22); }
+  .board-card ol { margin: 10px 0 0; padding-left: 1.7em; font-family: var(--mono); font-size: 15px; line-height: 1.9; }
+  .board-card li.me { color: var(--blue-soft); font-weight: 600; }
+  .board-card li::marker { color: var(--muted); }
+  .board-card .empty { list-style: none; margin-left: -1.7em; color: var(--muted); }
+  .cta-area { margin-top: auto; padding-top: 18px; }
+  .pulse { animation: breathe 2.4s ease-in-out infinite; }
+  @keyframes breathe { 50% { box-shadow: 0 10px 46px rgba(10,92,255,.75); } }
+
+  /* ---------- round ---------- */
+  .hud { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: var(--mono); font-size: 12px; letter-spacing: .08em; color: var(--muted); text-transform: uppercase; min-height: 28px; }
+  .hud b { color: #fff; font-weight: 600; }
+  .dots { display: flex; gap: 6px; }
+  .dots i { width: 22px; height: 6px; border-radius: 6px; background: rgba(248,250,252,.16); }
+  .dots i.done { background: var(--blue); }
+  .dots i.now { background: var(--blue-soft); }
+  .ticket { display: flex; align-items: stretch; margin-top: 14px; border-radius: 18px; overflow: hidden; background: #fff; color: var(--on-light); box-shadow: 0 16px 40px rgba(0,0,0,.4); }
+  .ticket .route { flex: none; min-width: 64px; display: grid; place-items: center; padding: 0 12px; color: #fff; font-weight: 800; font-size: 32px; letter-spacing: -.04em; }
+  .ticket .info { flex: 1; min-width: 0; padding: 12px 14px; border-left: 3px dashed #CBD5E1; display: flex; flex-direction: column; justify-content: center; }
+  .ticket .info small { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: #64748B; }
+  .ticket .info strong { font-size: 17px; line-height: 1.2; letter-spacing: -.02em; margin-top: 3px; }
+  .ticket .time { flex: none; padding: 10px 14px; background: linear-gradient(135deg, var(--blue), var(--blue-deep)); color: #fff; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; }
+  .ticket .time small { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; color: var(--blue-pale); }
+  .ticket .time b { font-size: 30px; font-weight: 800; letter-spacing: -.04em; font-variant-numeric: tabular-nums; line-height: 1.05; }
+  .ask { text-align: center; margin: 18px 0 2px; }
+  .q { font-size: 20px; line-height: 1.3; letter-spacing: -.02em; margin: 0; }
+  .q b { color: var(--blue-soft); }
+  .guess { margin-top: 8px; display: flex; flex-direction: column; align-items: center; }
+  .gv { font-weight: 800; font-size: 46px; letter-spacing: -.05em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .gw { font-family: var(--mono); font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+
+  .scale { position: relative; height: var(--sh); margin: 8px calc(var(--pad) * -.5) 0; touch-action: none; cursor: grab; outline-offset: -2px; }
+  .scale:active { cursor: grabbing; }
+  .scale.locked { cursor: default; }
+  .track { position: absolute; top: 0; bottom: 0; left: var(--inset); right: var(--inset); }
+  .axis { position: absolute; left: calc(var(--inset) * -.5); right: calc(var(--inset) * -.5); top: calc(var(--ax) - 7px); height: 14px; border-radius: 14px; background: linear-gradient(90deg, #DBEAFE 0%, #93C5FD 30%, #60A5FA 50%, #2563EB 75%, #0A5CFF 100%); opacity: .5; }
+  .tick { position: absolute; top: calc(var(--ax) + 12px); width: 2px; height: 10px; margin-left: -1px; background: rgba(248,250,252,.28); }
+  .tick span { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .tick.zero { background: var(--ink); height: 14px; }
+  .tick.zero span { color: var(--ink); }
+  .band { position: absolute; top: calc(var(--ax) - 16px); height: 32px; border-radius: 16px; background: rgba(147,197,253,.22); border: 2px solid rgba(147,197,253,.8); opacity: 0; transition: opacity .5s; }
+  .mark { position: absolute; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; }
+  .mark .flag { font-family: var(--mono); font-weight: 600; font-size: 11.5px; line-height: 1; padding: 6px 9px; border-radius: 8px; white-space: nowrap; letter-spacing: .04em; }
+  .mark .stem { width: 3px; }
+  .mark .head { border-radius: 50%; }
+  /* heads are centred on the axis; flags sit at three heights so coinciding values never hide each other */
+  .you { bottom: calc(var(--sh) - var(--ax) - 18px); z-index: 3; }
+  .you .flag, .you .stem, .you .head { background: var(--blue); color: #fff; }
+  .you .stem { height: 42px; }
+  .you .head { width: 36px; height: 36px; box-shadow: 0 0 0 7px rgba(10,92,255,.3), inset 0 0 0 3px #fff; }
+  .plan { bottom: calc(var(--sh) - var(--ax) - 8px); z-index: 4; }
+  .plan .flag, .plan .stem, .plan .head { background: var(--ink); color: var(--on-light); }
+  .plan .stem { height: 10px; }
+  .plan .head { width: 16px; height: 16px; }
+  .real { bottom: calc(var(--sh) - var(--ax) - 15px); z-index: 5; opacity: 0; transition: opacity .45s; }
+  .real .flag, .real .stem, .real .head { background: var(--blue-soft); color: var(--on-light); }
+  .real .stem { height: 84px; }
+  .real .head { width: 30px; height: 30px; box-shadow: 0 0 0 6px rgba(147,197,253,.3); }
+  .revealed .real, .revealed .band { opacity: 1; }
+  .ride { position: absolute; top: calc(var(--ax) - 30px); width: 46px; height: 26px; margin-left: -23px; z-index: 6; opacity: 0; pointer-events: none; filter: drop-shadow(0 4px 10px rgba(10,92,255,.6)); }
+  .hint { text-align: center; font-family: var(--mono); font-size: 11.5px; color: var(--muted); margin: 0 0 8px; }
+
+  .actions { margin-top: auto; padding-top: 10px; }
+  .nudge { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .nudge .btn { width: 100%; font-family: var(--mono); font-weight: 600; font-size: 15px; }
+  .result { margin-top: auto; padding-top: 6px; text-align: center; }
+  .result[hidden], .actions[hidden] { display: none; }
+  .pts { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+  .pts #pts { font-weight: 800; font-size: 50px; letter-spacing: -.05em; line-height: 1; color: var(--blue-soft); font-variant-numeric: tabular-nums; }
+  .badge { font-family: var(--mono); font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 99px; background: var(--blue-pale); color: var(--blue-deep); }
+  .verdict { font-size: 15.5px; line-height: 1.45; color: var(--text-2); margin: 10px 0 8px; }
+  .verdict b { color: #fff; }
+  .fact { font-size: 13.5px; line-height: 1.45; margin: 0 0 14px; padding: 10px 12px; border-radius: 12px; background: rgba(147,197,253,.1); border: 1px solid rgba(147,197,253,.22); color: var(--blue-pale); text-align: left; }
+  .fact b { color: #fff; }
+
+  /* ---------- final ---------- */
+  #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
+  .final { text-align: center; }
+  .fscore { font-weight: 800; font-size: clamp(84px, 26vw, 200px); line-height: .9; letter-spacing: -.07em; font-variant-numeric: tabular-nums; margin-top: 10px; }
+  .rank { font-weight: 700; font-size: 26px; letter-spacing: -.03em; color: var(--blue-soft); margin: 8px 0 14px; }
+  .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .vs div { padding: 12px; border-radius: 14px; background: rgba(248,250,252,.06); border: 1px solid rgba(248,250,252,.1); }
+  .vs div.win { background: rgba(10,92,255,.22); border-color: rgba(147,197,253,.5); }
+  .vs b { display: block; font-size: 28px; font-weight: 800; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+  .vs span { font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+  .vline { font-size: 16px; margin: 0 0 16px; color: var(--text-2); }
+  .vline b { color: #fff; }
+  .stack { display: flex; flex-direction: column; gap: 10px; }
+  .links { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 10px; }
+  .links .btn { width: 100%; font-size: 15.5px; padding: 0 14px; line-height: 1.2; text-align: center; }
+  .final-side { margin-top: 18px; text-align: left; }
+  .initials { display: flex; gap: 10px; justify-content: center; margin: 10px 0 12px; }
+  .letter { display: flex; flex-direction: column; align-items: center; }
+  .letter button.arr { width: 56px; height: 34px; border: 0; background: transparent; color: var(--blue-soft); font-size: 18px; cursor: pointer; }
+  .letter button.ch { width: 56px; height: 62px; border-radius: 14px; border: 1px solid rgba(147,197,253,.35); background: rgba(248,250,252,.06); font-size: 32px; font-weight: 800; cursor: pointer; }
+  .boothqr { display: none; align-items: center; gap: 14px; text-align: left; padding: 12px; border-radius: 16px; background: #fff; color: var(--on-light); }
+  .boothqr img { width: 96px; height: 96px; display: block; }
+  .boothqr b { display: block; font-size: 17px; letter-spacing: -.02em; }
+  .boothqr span { font-family: var(--mono); font-size: 11px; color: #475569; }
+  .booth .boothqr { display: flex; }
+  .booth #share { display: none; }
+  .toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 22px); transform: translate(-50%, 20px); padding: 12px 16px; border-radius: 12px; background: var(--ink); color: var(--on-light); font-weight: 600; font-size: 14px; opacity: 0; transition: opacity .25s, transform .25s; z-index: 30; max-width: calc(100vw - 32px); text-align: center; pointer-events: none; }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+  /* ---------- tablets and desktops ---------- */
+  @media (min-width: 720px) {
+    :root { --pad: 32px; --sh: 230px; --ax: 150px; --inset: 44px; }
+    .wrap { max-width: 1080px; }
+    .hud { font-size: 14px; }
+    .dots i { width: 34px; height: 7px; }
+    .ticket { align-self: center; min-width: min(640px, 100%); margin-top: 22px; }
+    .ticket .route { min-width: 92px; font-size: 46px; }
+    .ticket .info { padding: 16px 22px; }
+    .ticket .info strong { font-size: 22px; }
+    .ticket .time { padding: 14px 22px; }
+    .ticket .time b { font-size: 42px; }
+    .q { font-size: 28px; }
+    .gv { font-size: 64px; }
+    .gw { font-size: 14px; }
+    .mark .flag { font-size: 13px; padding: 7px 11px; }
+    .tick span { font-size: 12.5px; }
+    .hint { font-size: 13px; }
+    .actions { display: grid; grid-template-columns: 170px minmax(240px, 380px) 170px; gap: 14px; justify-content: center; align-items: center; margin-top: 18px; }
+    .nudge { display: contents; }
+    .nudge #minus { grid-column: 1; grid-row: 1; }
+    .nudge #plus { grid-column: 3; grid-row: 1; }
+    .actions #lock { grid-column: 2; grid-row: 1; margin: 0; }
+    /* one row on wide screens: points | what happened | next */
+    .result { display: grid; grid-template-columns: auto minmax(0, 1fr) 230px; grid-template-rows: auto auto; column-gap: 26px; row-gap: 8px; align-items: center; text-align: left; margin-top: 18px; width: 100%; max-width: 1040px; align-self: center; }
+    .result .pts { grid-column: 1; grid-row: 1 / span 2; flex-direction: column; align-items: flex-start; gap: 8px; }
+    .result .verdict { grid-column: 2; grid-row: 1; margin: 0; font-size: 17px; }
+    .result .fact { grid-column: 2; grid-row: 2; margin: 0; font-size: 15px; }
+    .result #next { grid-column: 3; grid-row: 1 / span 2; width: 100%; }
+    .pts #pts { font-size: 64px; }
+    .board-card ol { font-size: 17px; }
+  }
+  @media (min-width: 960px) and (min-height: 600px) {
+    .start { display: grid; grid-template-columns: 1.15fr .85fr; grid-template-rows: auto 1fr auto; column-gap: 56px; align-content: stretch; }
+    .start .brandbar { grid-column: 1 / -1; }
+    .start .hero { grid-column: 1; align-self: center; }
+    .start .hero h1 { margin-top: 2vh; font-size: clamp(96px, 10vw, 168px); }
+    .start .lede { font-size: 20px; }
+    .start .side { grid-column: 2; grid-row: 2; align-self: center; }
+    .start .cta-area { grid-column: 1; grid-row: 3; max-width: 520px; }
+    .final { display: grid; grid-template-columns: 1fr 1fr; column-gap: 56px; align-content: center; text-align: left; }
+    .final .final-main, .final .final-side { align-self: center; }
+    .final .final-side { margin-top: 0; }
+    .final .fine { grid-column: 1 / -1; text-align: center; }
+    .fscore { font-size: clamp(120px, 12vw, 200px); }
+    .links { grid-template-columns: 1fr 1fr; }
+  }
+  /* big kiosk screens: larger type, round centred between the HUD and the bottom */
+  @media (min-width: 1500px) and (min-height: 900px) {
+    :root { --pad: 48px; --sh: 300px; --ax: 196px; --inset: 64px; }
+    .wrap { max-width: 1440px; }
+    .hud { font-size: 16px; }
+    .dots i { width: 46px; height: 8px; }
+    .round .ticket { margin-top: auto; min-width: 820px; }
+    .round .actions, .round .result { margin-bottom: auto; }
+    .ticket .route { min-width: 120px; font-size: 62px; }
+    .ticket .info small { font-size: 13px; }
+    .ticket .info strong { font-size: 30px; }
+    .ticket .time small { font-size: 12px; }
+    .ticket .time b { font-size: 58px; }
+    .ask { margin-top: 30px; }
+    .q { font-size: 38px; }
+    .gv { font-size: 92px; }
+    .gw { font-size: 17px; }
+    .mark .flag { font-size: 16px; padding: 8px 13px; }
+    .you .stem { height: 60px; } .you .head { width: 44px; height: 44px; }
+    .you { bottom: calc(var(--sh) - var(--ax) - 22px); }
+    .real .stem { height: 118px; } .real .head { width: 36px; height: 36px; }
+    .real { bottom: calc(var(--sh) - var(--ax) - 18px); }
+    .tick span { font-size: 15px; top: 18px; }
+    .hint { font-size: 15px; }
+    .btn { font-size: 20px; min-height: 58px; }
+    .btn.big { min-height: 72px; font-size: 23px; }
+    .actions { grid-template-columns: 210px 460px 210px; margin-top: 26px; }
+    .result { grid-template-columns: auto minmax(0, 1fr) 300px; max-width: 1300px; margin-top: 26px; column-gap: 36px; }
+    .pts #pts { font-size: 92px; }
+    .badge { font-size: 14px; }
+    .result .verdict { font-size: 22px; }
+    .result .fact { font-size: 18px; }
+    .start .lede { font-size: 24px; }
+    .how li { font-size: 17px; }
+    .board-card ol { font-size: 20px; }
+    .rank { font-size: 34px; }
+    .vs b { font-size: 40px; }
+    .vline { font-size: 20px; }
+  }
+  @media (min-width: 720px) and (max-height: 820px) {
+    :root { --sh: 210px; --ax: 136px; }
+    .hero h1 { margin-top: 3vh; }
+    .ask { margin-top: 12px; }
+    .gv { font-size: 54px; }
+    .ticket { margin-top: 14px; }
+  }
+  @media (max-width: 380px) {
+    :root { --pad: 14px; --inset: 30px; }
+    .gv { font-size: 40px; }
+    .q { font-size: 18px; }
+    .ticket .route { min-width: 54px; font-size: 27px; }
+    .ticket .time b { font-size: 26px; }
+    .ticket .info strong { font-size: 15.5px; }
+  }
+  /* short phones (e.g. 360×740): keep Play, Lock and Next on screen without scrolling */
+  @media (max-height: 780px) and (max-width: 719px) {
+    :root { --sh: 178px; --ax: 118px; }
+    .real .stem { height: 76px; }
+    .you .stem { height: 38px; }
+    .hero h1 { margin-top: 3vh; font-size: clamp(60px, 17vw, 120px); }
+    .road { display: none; }
+    .ticket { margin-top: 10px; }
+    .ask { margin-top: 10px; }
+    .gv { font-size: 40px; }
+    .hint { margin-bottom: 4px; }
+    .pts #pts { font-size: 42px; }
+    .verdict { font-size: 14.5px; margin: 6px 0; }
+    .fact { font-size: 13px; padding: 8px 10px; margin-bottom: 10px; }
+    .nudge { margin-bottom: 8px; }
+  }
+  .revealed-screen .hint { display: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .rollbus, .pulse, .screen.on { animation: none; }
+    .rollbus { left: 40%; }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="busg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0A5CFF"/><stop offset="1" stop-color="#082E9F"/></linearGradient>
+    <symbol id="bus" viewBox="0 0 120 64"><rect x="2" y="4" width="112" height="46" rx="12" fill="url(#busg)"/><rect x="12" y="13" width="18" height="16" rx="3" fill="#DBEAFE"/><rect x="36" y="13" width="18" height="16" rx="3" fill="#DBEAFE"/><rect x="60" y="13" width="18" height="16" rx="3" fill="#DBEAFE"/><rect x="86" y="13" width="20" height="30" rx="3" fill="#93C5FD"/><circle cx="28" cy="52" r="9" fill="#0F172A"/><circle cx="28" cy="52" r="4" fill="#94A3B8"/><circle cx="90" cy="52" r="9" fill="#0F172A"/><circle cx="90" cy="52" r="4" fill="#94A3B8"/></symbol>
+  </defs>
+</svg>
+
+<section class="screen on" id="startScreen">
+  <div class="wrap start">
+    <header class="brandbar"><a href="../" aria-label="Abasis.AI · Cyprus in Motion"><img class="logo" src="../assets/abasis-logo-white.svg" alt="Abasis.AI"></a><span class="kicker">Real bus data · Nicosia</span></header>
+    <div class="hero">
+      <h1>Beat<br>the <em>Bus.</em></h1>
+      <p class="lede">The timetable says one thing. The bus does another. Guess when five real buses reached the stop — and try to beat the official timetable.</p>
+      <ul class="how"><li><b>5</b>real buses</li><li><b>60</b>seconds</li><li><b>1</b>timetable to beat</li></ul>
+    </div>
+    <div class="side">
+      <div class="road" aria-hidden="true"><svg class="rollbus" width="120" height="64"><use href="#bus"/></svg></div>
+      <aside class="board-card" id="startBoard" hidden><div class="small" id="startBoardTitle">Today at the stand</div><ol id="startBoardList"></ol></aside>
+    </div>
+    <div class="cta-area">
+      <button class="btn primary big pulse" id="play">Play</button>
+      <p class="fine">Real data: GPS-observed passages at the Ministry of Finance stop, Nicosia, on eight autumn Mondays (7 Sep – 26 Oct 2026).</p>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="roundScreen">
+  <div class="wrap round">
+    <header class="hud"><span>Bus <b id="hudN">1</b> / 5</span><span class="dots" id="dots"></span><span>Score <b id="hudScore">0</b></span></header>
+    <div class="ticket" id="ticket"></div>
+    <div class="ask">
+      <p class="q" id="question">When did it <b>really</b> arrive?</p>
+      <div class="guess"><span class="gv" id="gv">+0:00</span><span class="gw" id="gw">same as timetable</span></div>
+    </div>
+    <div class="scale" id="scale" role="slider" tabindex="0" aria-label="Your guess in minutes versus the timetable" aria-valuemin="-7" aria-valuemax="15" aria-valuenow="0">
+      <div class="track" id="track">
+        <div class="axis"></div>
+        <div class="band" id="band"></div>
+        <div class="mark plan" id="mPlan"><div class="flag">TIMETABLE</div><div class="stem"></div><div class="head"></div></div>
+        <div class="mark real" id="mReal"><div class="flag">REALITY</div><div class="stem"></div><div class="head"></div></div>
+        <div class="mark you" id="mYou"><div class="flag">YOU</div><div class="stem"></div><div class="head"></div></div>
+        <svg class="ride" id="ride" viewBox="0 0 120 64" aria-hidden="true"><use href="#bus"/></svg>
+      </div>
+    </div>
+    <p class="hint" id="hint">Drag anywhere on the line — or nudge by 15 seconds</p>
+    <div class="actions" id="actions">
+      <div class="nudge"><button class="btn ghost" id="minus" aria-label="15 seconds earlier">−15 s</button><button class="btn ghost" id="plus" aria-label="15 seconds later">+15 s</button></div>
+      <button class="btn primary big" id="lock">Lock it in</button>
+    </div>
+    <div class="result" id="result" hidden aria-live="polite">
+      <div class="pts"><span id="pts">+0</span><span class="badge" id="inband" hidden>IN THE BAND · +250</span></div>
+      <p class="verdict" id="verdict"></p>
+      <p class="fact" id="fact"></p>
+      <button class="btn primary big" id="next">Next bus →</button>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="finalScreen">
+  <canvas id="confetti" aria-hidden="true"></canvas>
+  <div class="wrap final">
+    <div class="final-main">
+      <div class="kicker">Your result</div>
+      <div class="fscore" id="fScore">0</div>
+      <div class="rank" id="fRank"></div>
+      <div class="vs" id="fVs"></div>
+      <p class="vline" id="fLine"></p>
+      <div class="stack">
+        <button class="btn primary big" id="share">Share your score</button>
+        <div class="boothqr"><img src="../assets/qr-play.svg" alt="QR code to play on your phone"><div><b>Play on your phone</b><span>scan · share · challenge friends</span></div></div>
+      </div>
+      <div class="links">
+        <a class="btn ghost" href="../#understand">See how we predict arrivals</a>
+        <a class="btn ghost" href="../">Explore all 12 projects</a>
+      </div>
+    </div>
+    <div class="final-side">
+      <div class="board-card">
+        <div id="enter">
+          <div class="small">Your initials for today’s board</div>
+          <div class="initials" id="initials"></div>
+          <button class="btn ghost" id="save" style="width:100%">Save my score</button>
+        </div>
+        <div class="small" style="margin-top:14px" id="boardTitle">Today’s best</div>
+        <ol id="board"></ol>
+      </div>
+      <button class="btn primary big" id="again" style="margin-top:14px">Play again</button>
+    </div>
+    <p class="fine">Typical = median of GPS-observed passages over eight autumn Mondays at the Ministry of Finance stop, Nicosia. The band = 10th–90th percentile. Built by Abasis.AI.</p>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+</section>
+
+<script src="../data/timetable.js"></script>
+<script src="../data/overlays.js"></script>
+<script>
+(() => {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  const P = new URLSearchParams(location.search);
+  const BOOTH = P.get('booth') === '1';
+  const IDLE_MS = BOOTH ? Math.max(2, Number(P.get('idle')) || 60) * 1000 : 0;
+  const FORCE_COPY = P.get('copy') === '1';
+  const PLAY_URL = 'https://abasis-ltd.github.io/cyprus-in-motion/play/';
+  const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T = window.TIMETABLE, PUNCT = window.OVERLAYS.punctuality.routes;
+  const ROUTE_COLORS = { '1': '#0A5CFF', '2': '#2563EB', '11': '#082E9F', '12': '#1D4ED8', '13': '#3B82F6', '19': '#0F172A', '400': '#334155' };
+  // full destination names (the feed's headsigns are cut at 17 characters)
+  const HEADSIGN = { 'Solomos Square Al': 'Solomos Square', 'Isokratous - Kall': 'Isokratous – Kallikratous', 'Alexandrou Panago': 'Alexandrou Panagouli – Ag. Dimitriou', 'Makario Stadium B': 'Makario Stadium Bus Station', 'Strovolos Station': 'Strovolos Station' };
+  const MIN = -7, MAX = 15, ROUNDS = 5, STEP = .25;
+  const pool = T.rows.filter(r => r.sufficient_history && r.observations >= 5);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  const hhmm = s => { const m = Math.round(s / 60); return String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+  const mmss = m => { const a = Math.round(Math.abs(m) * 60), mm = Math.floor(a / 60), ss = a % 60; return (m < 0 ? '−' : '+') + mm + ':' + String(ss).padStart(2, '0'); };
+  const words = m => {
+    const a = Math.round(Math.abs(m) * 12) * 5; // nearest 5 s
+    if (a === 0) return 'same as timetable';
+    const mm = Math.floor(a / 60), ss = a % 60;
+    return (mm ? mm + ' min' : '') + (mm && ss ? ' ' : '') + (ss ? ss + ' s' : '') + (m < 0 ? ' early' : ' late');
+  };
+  const pct = m => (clamp(m, MIN, MAX) - MIN) / (MAX - MIN) * 100;
+  const pointsFor = (err, inBand) => Math.round(Math.max(0, 1 - Math.abs(err) / 6) * 1000) + (inBand ? 250 : 0);
+  // light tap on phones only, and only after a real user gesture (browsers block it otherwise)
+  const haptic = () => {
+    try {
+      const touch = matchMedia('(pointer: coarse)').matches, active = !navigator.userActivation || navigator.userActivation.hasBeenActive;
+      if (navigator.vibrate && touch && active) navigator.vibrate(15);
+    } catch (e) {}
+  };
+
+  // how each route usually runs here (median of its trips), from the same observed data
+  const habit = {};
+  for (const r of pool) (habit[r.route_short_name] ||= []).push((r.median_seconds - r.scheduled_seconds) / 60);
+  for (const k in habit) { const a = habit[k].sort((x, y) => x - y); habit[k] = a[a.length >> 1]; }
+
+  let rounds = [], i = 0, score = 0, tableScore = 0, guess = 0, revealed = false, busy = false;
+
+  function show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id));
+    scrollTo(0, 0);
+  }
+
+  // ---------- leaderboard (this device, today) ----------
+  const DAY = new Date().toLocaleDateString('en-CA');
+  const KEY = 'beat-the-bus:' + DAY, ME = 'beat-the-bus:initials';
+  const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; } };
+  const store = b => { try { localStorage.setItem(KEY, JSON.stringify(b)); } catch (e) {} };
+  const ABC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let letters = [0, 0, 0], savedAt = -1;
+
+  function boardHtml(n, highlight) {
+    const b = load();
+    if (!b.length) return '<li class="empty">Be the first today!</li>';
+    return b.slice(0, n).map((e, k) => `<li class="${k === highlight ? 'me' : ''}">${e.n} · ${e.s.toLocaleString('en-US')}</li>`).join('');
+  }
+  function renderStartBoard() {
+    const has = load().length > 0;
+    const box = $('#startBoard');
+    box.hidden = !(BOOTH || has);
+    $('#startBoardTitle').textContent = BOOTH ? 'Today at the stand' : 'Your best today';
+    $('#startBoardList').innerHTML = boardHtml(BOOTH ? 7 : 3, -1);
+  }
+
+  // ---------- rounds ----------
+  function pick() {
+    const routes = Object.keys(habit).sort(() => Math.random() - .5);
+    return Array.from({ length: ROUNDS }, (_, k) => {
+      const opts = pool.filter(r => r.route_short_name === routes[k % routes.length]);
+      return opts[(Math.random() * opts.length) | 0];
+    });
+  }
+  function start() {
+    rounds = pick(); i = 0; score = 0; tableScore = 0;
+    $('#hudScore').textContent = '0';
+    stopConfetti();
+    show('roundScreen'); round();
+  }
+
+  const scale = $('#scale'), track = $('#track');
+  function ticks() {
+    track.querySelectorAll('.tick').forEach(t => t.remove());
+    const wide = track.clientWidth >= 520;
+    for (let m = -6; m <= 14; m += 2) {
+      const t = document.createElement('div');
+      t.className = 'tick' + (m === 0 ? ' zero' : '');
+      t.style.left = pct(m) + '%';
+      if (wide || m % 4 === 0) t.innerHTML = `<span>${m === 0 ? 'on time' : (m > 0 ? '+' : '−') + Math.abs(m) + (wide ? ' min' : 'm')}</span>`;
+      track.appendChild(t);
+    }
+  }
+
+  function round() {
+    const r = rounds[i];
+    revealed = false; busy = false;
+    scale.classList.remove('revealed', 'locked');
+    $('#roundScreen').classList.remove('revealed-screen');
+    scrollTo(0, 0);
+    $('#hudN').textContent = i + 1;
+    $('#dots').innerHTML = rounds.map((_, k) => `<i class="${k < i ? 'done' : k === i ? 'now' : ''}"></i>`).join('');
+    const name = HEADSIGN[r.trip_headsign.trim()] || r.trip_headsign.trim() + '…';
+    $('#ticket').innerHTML = `<div class="route" style="background:${ROUTE_COLORS[r.route_short_name] || '#0A5CFF'}">${r.route_short_name}</div>
+      <div class="info"><small>Monday · towards</small><strong>${name}</strong></div>
+      <div class="time"><small>TIMETABLE</small><b>${hhmm(r.scheduled_seconds)}</b></div>`;
+    $('#question').innerHTML = 'When did it <b>really</b> arrive?';
+    $('#mPlan').style.left = pct(0) + '%';
+    $('#ride').style.opacity = 0;
+    $('#band').style.width = '0';
+    $('#actions').hidden = false; $('#result').hidden = true; $('#hint').style.visibility = 'visible';
+    ticks();
+    setYou(0);
+  }
+
+  function setYou(m) {
+    guess = Math.round(clamp(m, MIN, MAX) / STEP) * STEP;
+    $('#mYou').style.left = pct(guess) + '%';
+    $('#gv').textContent = mmss(guess);
+    $('#gw').textContent = words(guess);
+    scale.setAttribute('aria-valuenow', guess.toFixed(2));
+    scale.setAttribute('aria-valuetext', words(guess));
+  }
+
+  // drag anywhere on the line (the whole scale is the touch target)
+  let dragging = false;
+  const fromEvent = e => { const b = track.getBoundingClientRect(); return MIN + (e.clientX - b.left) / b.width * (MAX - MIN); };
+  scale.addEventListener('pointerdown', e => { if (revealed) return; dragging = true; scale.setPointerCapture(e.pointerId); setYou(fromEvent(e)); e.preventDefault(); });
+  scale.addEventListener('pointermove', e => { if (dragging) setYou(fromEvent(e)); });
+  const endDrag = () => { if (dragging) { dragging = false; haptic(); } };
+  scale.addEventListener('pointerup', endDrag);
+  scale.addEventListener('pointercancel', endDrag);
+  $('#minus').onclick = () => { if (!revealed) setYou(guess - STEP); };
+  $('#plus').onclick = () => { if (!revealed) setYou(guess + STEP); };
+  addEventListener('keydown', e => {
+    if (!$('#roundScreen').classList.contains('on')) return;
+    if (!revealed && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      setYou(guess + (e.key === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? 1 : STEP)); e.preventDefault();
+    }
+    if (e.key === 'Enter' && !/^(BUTTON|A)$/.test(e.target.tagName)) { revealed ? (busy ? null : next()) : reveal(); }
+  });
+
+  function countUp(el, to, ms, fmt = v => v) {
+    if (reduceMotion() || ms <= 0) { el.textContent = fmt(to); return; }
+    const t0 = performance.now(), token = el.__count = {};
+    const step = now => { if (el.__count !== token) return; const k = clamp((now - t0) / ms, 0, 1); el.textContent = fmt(Math.round(to * ease(k))); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+    // animation frames pause in background tabs; make sure the final value always lands
+    setTimeout(() => { if (el.__count === token) el.textContent = fmt(to); }, ms + 120);
+  }
+
+  function reveal() {
+    if (revealed) return;
+    revealed = true; busy = true;
+    haptic();
+    const r = rounds[i];
+    const real = (r.median_seconds - r.scheduled_seconds) / 60;
+    const lo = (r.p10_seconds - r.scheduled_seconds) / 60, hi = (r.p90_seconds - r.scheduled_seconds) / 60;
+    const inBand = guess >= lo && guess <= hi;
+    const pts = pointsFor(guess - real, inBand);
+    const tPts = pointsFor(0 - real, 0 >= lo && 0 <= hi);
+    score += pts; tableScore += tPts;
+    scale.classList.add('locked');
+    $('#actions').hidden = true; $('#hint').style.visibility = 'hidden';
+    $('#mReal').style.left = pct(real) + '%';
+    $('#band').style.left = pct(lo) + '%'; $('#band').style.width = (pct(hi) - pct(lo)) + '%';
+
+    // a little bus drives from the timetable to where the bus really was
+    const ride = $('#ride'), dur = reduceMotion() ? 0 : 1100, t0 = performance.now();
+    let landed = false;
+    const land = () => {
+      if (landed) return;
+      landed = true;
+      ride.style.opacity = 0;
+      scale.classList.add('revealed');
+      $('#question').innerHTML = `Typically at <b>${hhmm(r.median_seconds)}</b> — ${words(real)}`;
+      $('#gw').textContent = 'your guess · ' + words(guess);
+      const beat = Math.abs(guess - real) < Math.abs(real);
+      const verdict = beat ? '<b>You beat the timetable.</b>' : Math.abs(real) < .75 ? '<b>The timetable nailed this one.</b>' : '<b>The timetable was closer this time.</b>';
+      $('#verdict').innerHTML = `${verdict} The band shows where this bus passed on most of ${r.observations} observed Mondays.`;
+      $('#fact').innerHTML = fact(r.route_short_name);
+      $('#inband').hidden = !inBand;
+      $('#next').textContent = i + 1 < ROUNDS ? 'Next bus →' : 'See my score';
+      $('#roundScreen').classList.add('revealed-screen');
+      $('#result').hidden = false;
+      // on very small screens make sure the Next button is reachable
+      if ($('#next').getBoundingClientRect().bottom > innerHeight) $('#next').scrollIntoView({ block: 'end', behavior: reduceMotion() ? 'auto' : 'smooth' });
+      countUp($('#pts'), pts, 700, v => '+' + v);
+      countUp($('#hudScore'), score, 700);
+      haptic();
+      setTimeout(() => { busy = false; }, 250);
+    };
+    if (!dur) { land(); return; }
+    ride.style.opacity = 1;
+    ride.style.transform = real < 0 ? 'scaleX(-1)' : '';
+    const step = now => {
+      if (landed) return;
+      const k = clamp((now - t0) / dur, 0, 1);
+      ride.style.left = (pct(0) + (pct(real) - pct(0)) * ease(k)) + '%';
+      if (k < 1) requestAnimationFrame(step); else land();
+    };
+    requestAnimationFrame(step);
+    setTimeout(land, dur + 250); // frames pause in background tabs; the round must still complete
+  }
+
+  function fact(route) {
+    const p = PUNCT.find(x => x.route === route), n = v => Math.round(v);
+    // one source for the whole sentence: the route's passage statistics at this stop
+    const usual = `Route ${route} usually runs <b>${words(p ? p.median : habit[route])}</b> here`;
+    if (!p) return `<b>Did you know?</b> ${usual}.`;
+    if (p.early >= 15) return `<b>Did you know?</b> ${usual}, yet passes more than a minute early ${n(p.early)}% of the time — riders who come on schedule can miss it.`;
+    if (p.late >= 20) return `<b>Did you know?</b> ${usual}, and is more than 5 minutes late ${n(p.late)}% of the time.`;
+    return `<b>Did you know?</b> ${usual}; ${n(p.within)}% of its passages are within −1/+5 min of the timetable.`;
+  }
+
+  function next() { i++; i < ROUNDS ? round() : finish(); }
+  $('#lock').onclick = reveal;
+  $('#next').onclick = () => { if (!busy) next(); };
+
+  // ---------- final ----------
+  function finish() {
+    show('finalScreen');
+    savedAt = -1;
+    letters = BOOTH ? [0, 0, 0] : (() => { try { const s = localStorage.getItem(ME) || ''; return /^[A-Z]{3}$/.test(s) ? [...s].map(c => ABC.indexOf(c)) : [0, 0, 0]; } catch (e) { return [0, 0, 0]; } })();
+    countUp($('#fScore'), score, 900, v => v.toLocaleString('en-US'));
+    const max = ROUNDS * 1250;
+    $('#fRank').textContent = score >= max * .75 ? 'Bus Whisperer' : score >= max * .55 ? 'Dispatcher' : score >= max * .35 ? 'Daily commuter' : 'Tourist';
+    const win = score > tableScore, draw = score === tableScore;
+    $('#fVs').innerHTML = `<div class="${win ? 'win' : ''}"><b>${score.toLocaleString('en-US')}</b><span>you</span></div><div class="${!win && !draw ? 'win' : ''}"><b>${tableScore.toLocaleString('en-US')}</b><span>official timetable</span></div>`;
+    $('#fLine').innerHTML = win ? `<b>You beat the timetable by ${(score - tableScore).toLocaleString('en-US')} points.</b> Nicely read.`
+      : draw ? '<b>A draw with the timetable.</b> One more go?' : `<b>The timetable won by ${(tableScore - score).toLocaleString('en-US')} points.</b> Buses here tend to run a little late — try again?`;
+    renderInitials();
+    $('#enter').style.display = '';
+    $('#board').innerHTML = boardHtml(7, -1);
+    $('#boardTitle').textContent = BOOTH ? 'Today at the stand' : 'Today on this device';
+    if (win) confetti();
+  }
+  function renderInitials() {
+    $('#initials').innerHTML = letters.map((l, k) => `<div class="letter"><button class="arr" data-k="${k}" data-d="1" aria-label="Next letter">▲</button><button class="ch" data-k="${k}" data-d="1" aria-label="Letter ${k + 1}: ${ABC[l]}">${ABC[l]}</button><button class="arr" data-k="${k}" data-d="-1" aria-label="Previous letter">▼</button></div>`).join('');
+    $('#initials').querySelectorAll('button').forEach(b => b.onclick = () => {
+      const k = +b.dataset.k; letters[k] = (letters[k] + +b.dataset.d + 26) % 26;
+      const ch = $('#initials').querySelectorAll('.ch')[k]; ch.textContent = ABC[letters[k]]; ch.setAttribute('aria-label', `Letter ${k + 1}: ${ABC[letters[k]]}`);
+    });
+  }
+  $('#save').onclick = () => {
+    const b = load(), e = { n: letters.map(l => ABC[l]).join(''), s: score, t: Date.now() };
+    b.push(e); b.sort((x, y) => y.s - x.s || x.t - y.t); store(b.slice(0, 50));
+    if (!BOOTH) { try { localStorage.setItem(ME, e.n); } catch (err) {} }
+    savedAt = b.indexOf(e);
+    $('#enter').style.display = 'none';
+    $('#board').innerHTML = boardHtml(Math.max(7, savedAt + 1), savedAt);
+    toast(savedAt < 7 ? `You’re #${savedAt + 1} today` : 'Saved');
+  };
+
+  // ---------- share ----------
+  function toast(text) {
+    const t = $('#toast'); t.textContent = text; t.classList.add('on');
+    clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), 2600);
+  }
+  $('#share').onclick = async () => {
+    const diff = score - tableScore;
+    const text = `I scored ${score.toLocaleString('en-US')} in Beat the Bus — ` + (diff > 0 ? `beat the Nicosia bus timetable by ${diff.toLocaleString('en-US')} points. Can you?` : diff === 0 ? 'a draw with the Nicosia bus timetable. Can you beat it?' : `the Nicosia bus timetable won by ${(-diff).toLocaleString('en-US')} points. Can you beat it?`);
+    if (navigator.share && !FORCE_COPY) {
+      try { await navigator.share({ title: 'Beat the Bus', text, url: PLAY_URL }); return; }
+      catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    const full = text + ' ' + PLAY_URL;
+    try { await navigator.clipboard.writeText(full); toast('Copied — paste it anywhere'); return; } catch (e) {}
+    const ta = document.createElement('textarea');
+    ta.value = full; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+    ta.remove();
+    toast(ok ? 'Copied — paste it anywhere' : 'Share this link: ' + PLAY_URL);
+  };
+
+  // ---------- confetti (brand blues, ~1.5 s) ----------
+  let confettiRaf = 0;
+  function stopConfetti() { cancelAnimationFrame(confettiRaf); const c = $('#confetti'); c.getContext('2d').clearRect(0, 0, c.width, c.height); }
+  function confetti() {
+    if (reduceMotion()) return;
+    const c = $('#confetti'), ctx = c.getContext('2d'), dpr = Math.min(devicePixelRatio || 1, 2);
+    c.width = innerWidth * dpr; c.height = innerHeight * dpr;
+    const colors = ['#0A5CFF', '#2563EB', '#3B82F6', '#60A5FA', '#93C5FD', '#DBEAFE', '#FFFFFF'];
+    const parts = Array.from({ length: 140 }, () => ({
+      x: innerWidth * (.2 + Math.random() * .6), y: innerHeight * .32, vx: (Math.random() - .5) * 9, vy: -6 - Math.random() * 9,
+      w: 6 + Math.random() * 6, h: 8 + Math.random() * 8, r: Math.random() * 6, vr: (Math.random() - .5) * .3, c: colors[(Math.random() * colors.length) | 0]
+    }));
+    const t0 = performance.now();
+    const step = now => {
+      const k = (now - t0) / 1600;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, innerWidth, innerHeight);
+      if (k >= 1) return;
+      ctx.globalAlpha = 1 - Math.max(0, (k - .7) / .3);
+      for (const p of parts) {
+        p.vy += .32; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.vx *= .99;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.r * 2))); ctx.restore();
+      }
+      confettiRaf = requestAnimationFrame(step);
+    };
+    confettiRaf = requestAnimationFrame(step);
+  }
+
+  // ---------- booth mode: big board, reset after idle ----------
+  if (BOOTH) {
+    document.body.classList.add('booth');
+    let idle;
+    const goStart = () => { stopConfetti(); renderStartBoard(); show('startScreen'); };
+    const arm = () => { clearTimeout(idle); idle = setTimeout(goStart, IDLE_MS); };
+    ['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, arm, { passive: true }));
+    arm();
+    window.__beatTheBus = { goStart };
+  }
+
+  $('#play').onclick = start;
+  $('#again').onclick = start;
+  addEventListener('resize', () => { if ($('#roundScreen').classList.contains('on')) ticks(); });
+  renderStartBoard();
+})();
+</script>
+</body>
+</html>

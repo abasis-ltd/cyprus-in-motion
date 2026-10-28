@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beat the Bus — Stand Card</title>
+<link rel="stylesheet" href="assets/fonts/fonts.css">
+<style>
+  /* A5 stand card: brand gradient, legible from 1–2 m, QR to the phone game. */
+  :root {
+    --blue: #0A5CFF; --blue-deep: #082E9F; --blue-mid: #60A5FA; --blue-soft: #93C5FD; --blue-pale: #DBEAFE;
+    --ink: #0F172A; --slate: #475569;
+    --sans: "Geist", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --mono: "Fira Code", "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  @page { size: A5 portrait; margin: 0; }
+  html, body { margin: 0; }
+  body { background: #1E293B; font-family: var(--sans); color: #fff; -webkit-font-smoothing: antialiased; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .help { text-align: center; color: #CBD5E1; font-family: var(--mono); font-size: 13px; padding: 16px; }
+  .help button { font: inherit; padding: 8px 16px; border-radius: 8px; border: 0; background: var(--blue); color: #fff; cursor: pointer; margin-left: 10px; }
+  .card-page { position: relative; width: 148mm; height: 210mm; margin: 10mm auto; overflow: hidden; padding: 11mm 12mm 10mm; display: flex; flex-direction: column;
+    background: linear-gradient(160deg, var(--blue) 0%, var(--blue-deep) 64%); box-shadow: 0 10px 40px rgba(0,0,0,.4); }
+  /* print rules come after the screen layout so they win */
+  @media print { html, body { height: 210mm; overflow: hidden; } body { background: none; } .card-page { margin: 0; box-shadow: none; } .help { display: none; } }
+  .bg { position: absolute; inset: 0; }
+  .bg canvas { width: 100%; height: 100%; display: block; }
+  .top { position: relative; display: flex; justify-content: space-between; align-items: center; }
+  .top img { height: 9mm; margin-left: -2.4mm; }
+  .top span { font-family: var(--mono); font-size: 7pt; letter-spacing: .16em; text-transform: uppercase; color: var(--blue-pale); }
+  .kicker { position: relative; font-family: var(--mono); font-size: 8pt; letter-spacing: .16em; text-transform: uppercase; color: var(--blue-pale); display: flex; align-items: center; gap: 2.4mm; margin: 14mm 0 3mm; }
+  .kicker::before { content: ""; width: 8mm; height: .6mm; background: currentColor; }
+  h1 { position: relative; font-weight: 800; font-size: 56pt; line-height: .86; letter-spacing: -.055em; margin: 0 0 5mm; }
+  h1 em { font-style: normal; color: var(--blue-soft); }
+  .pitch { position: relative; font-size: 13pt; line-height: 1.38; color: var(--blue-pale); margin: 0 0 7mm; max-width: 112mm; }
+  .pitch b { color: #fff; }
+  .scan { position: relative; display: grid; grid-template-columns: 66mm 1fr; gap: 6mm; align-items: center; }
+  .qr { background: #fff; border-radius: 4mm; padding: 2mm; box-shadow: 0 3mm 9mm rgba(4,20,80,.45); }
+  .qr img { display: block; width: 62mm; height: 62mm; }
+  .scan h2 { font-weight: 800; font-size: 17pt; line-height: 1.08; letter-spacing: -.035em; margin: 0 0 4mm; }
+  .scan ol { list-style: none; counter-reset: s; margin: 0 0 4mm; padding: 0; }
+  .scan li { counter-increment: s; position: relative; padding-left: 7.4mm; font-size: 10pt; line-height: 1.3; margin-bottom: 2.4mm; color: var(--blue-pale); }
+  .scan li::before { content: counter(s); position: absolute; left: 0; top: -.2mm; width: 5mm; height: 5mm; border-radius: 50%; background: #fff; color: var(--blue-deep); font-family: var(--mono); font-size: 7pt; font-weight: 600; display: grid; place-items: center; }
+  .scan .url { font-family: var(--mono); font-size: 6.4pt; color: var(--blue-soft); line-height: 1.45; }
+  .foot { position: relative; margin-top: auto; display: grid; grid-template-columns: 24mm 1fr; gap: 4mm; align-items: center; padding: 3mm; border-radius: 3mm; background: rgba(255,255,255,.1); border: .25mm solid rgba(219,234,254,.35); }
+  .foot img { display: block; width: 24mm; height: 24mm; border-radius: 1.4mm; }
+  .foot b { display: block; font-size: 11.5pt; letter-spacing: -.02em; margin-bottom: 1mm; }
+  .foot span { display: block; font-size: 8pt; color: var(--blue-pale); line-height: 1.35; }
+  .foot .url { font-family: var(--mono); font-size: 6.4pt; color: var(--blue-soft); margin-top: 1.2mm; }
+</style>
+</head>
+<body>
+<div class="help">A5 portrait · stand / table card · <button onclick="print()">Print / Save PDF</button></div>
+<div class="card-page">
+  <div class="bg"><canvas id="bg"></canvas></div>
+  <div class="top"><img src="assets/abasis-logo-white.svg" alt="Abasis.AI"><span>Cyprus in Motion</span></div>
+  <div class="kicker">Play at our stand · 60 seconds</div>
+  <h1>Beat the<br><em>Bus.</em></h1>
+  <p class="pitch">Guess when five <b>real Nicosia buses</b> actually arrived. Can you beat the official timetable?</p>
+  <div class="scan">
+    <div class="qr"><img src="assets/qr-play.svg" alt="QR code: play Beat the Bus"></div>
+    <div>
+      <h2>Scan with your phone camera</h2>
+      <ol>
+        <li>Open the game — no app, no sign-up</li>
+        <li>Guess five real arrivals</li>
+        <li>See if you beat the timetable</li>
+      </ol>
+      <div class="url">abasis-ltd.github.io/<br>cyprus-in-motion/play</div>
+    </div>
+  </div>
+  <div class="foot">
+    <img src="assets/qr-site.svg" alt="QR code: explore all projects">
+    <div>
+      <b>Explore all 12 projects</b>
+      <span>Create, validate, track, predict, understand, move — transit data tools built in Cyprus.</span>
+      <div class="url">abasis-ltd.github.io/cyprus-in-motion · abasis.ai</div>
+    </div>
+  </div>
+</div>
+<script src="data/network.js"></script>
+<script>
+(() => {
+  // the real Cyprus bus network, faint, behind the headline
+  const cv = document.getElementById('bg'), ctx = cv.getContext('2d');
+  const W = cv.clientWidth, H = cv.clientHeight, k = 4;
+  cv.width = W * k; cv.height = H * k;
+  const s = (W * k * 1.25) / 10000, ox = -W * k * .2, oy = H * k * .06;
+  ctx.setTransform(s, 0, 0, s, ox, oy);
+  ctx.lineJoin = ctx.lineCap = 'round';
+  ctx.globalCompositeOperation = 'lighter';
+  for (const sh of window.NETWORK.shapes) {
+    ctx.beginPath(); ctx.moveTo(sh.p[0], sh.p[1]);
+    for (let i = 2; i < sh.p.length; i += 2) ctx.lineTo(sh.p[i], sh.p[i + 1]);
+    ctx.strokeStyle = 'rgba(219,234,254,.10)'; ctx.lineWidth = 14; ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.32)'; ctx.lineWidth = 3.2; ctx.stroke();
+  }
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  const g = ctx.createLinearGradient(0, 0, 0, H * k);
+  g.addColorStop(0, 'rgba(8,46,159,0)'); g.addColorStop(.2, 'rgba(8,46,159,.05)'); g.addColorStop(.5, 'rgba(8,46,159,.9)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W * k, H * k);
+})();
+</script>
+</body>
+</html>
