@@ -1,3 +1,4 @@
 .DS_Store
-# the rendered show is published as a release asset (too large for git)
+# rendered videos are published as release assets (too large for git)
 media/cyprus-in-motion-show-*.mp4
+media/cyprus-in-motion-teaser-*.mp4

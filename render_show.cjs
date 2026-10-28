@@ -15,7 +15,9 @@ const fps = +fpsArg;
   const total = await page.evaluate(() => window.__show.total);
   const from = Math.round(+fromArg * fps), to = Math.round((toArg ? +toArg * 1000 : total) / 1000 * fps);
   const ff = spawn('ffmpeg', ['-v', 'error', '-y', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'mjpeg', '-i', '-',
-    '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-g', String(fps * 2), '-movflags', '+faststart', out],
+    // JPEG frames are full-range; convert to TV range + High@4.1 so TVs and USB players show correct contrast
+    '-vf', 'scale=in_range=full:out_range=limited,format=yuv420p', '-color_range', 'tv', '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709',
+    '-c:v', 'libx264', '-preset', 'medium', '-crf', '19', '-profile:v', 'high', '-level', '4.1', '-g', String(fps * 2), '-movflags', '+faststart', out],
     { stdio: ['pipe', 'inherit', 'inherit'] });
   const t0 = Date.now();
   for (let f = from; f < to; f++) {
