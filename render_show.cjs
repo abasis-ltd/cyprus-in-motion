@@ -2,6 +2,7 @@
 // Needs Playwright (Chromium) and ffmpeg. Loads the show from this folder via file:// (needs no server;
 // a simple local HTTP server without Range support would break video seeking).
 // usage: node render_show.cjs out.mp4 [fps=30] [fromSec=0] [toSec=end] [playwrightModulePath]
+//        SHOW_CUT=short node render_show.cjs short.mp4   (the ~1:45 cut with every project)
 const { spawn } = require('child_process');
 const [out, fpsArg = '30', fromArg = '0', toArg = '', pwPath = 'playwright'] = process.argv.slice(2);
 const { chromium } = require(pwPath);
@@ -10,7 +11,8 @@ const fps = +fpsArg;
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
   page.on('pageerror', e => console.error('page error:', e.message));
-  await page.goto('file://' + require('path').join(__dirname, 'show/index.html') + '?render=1', { waitUntil: 'load' });
+  const cut = process.env.SHOW_CUT ? '&cut=' + encodeURIComponent(process.env.SHOW_CUT) : '';
+  await page.goto('file://' + require('path').join(__dirname, 'show/index.html') + '?render=1' + cut, { waitUntil: 'load' });
   await page.evaluate(() => window.__show.ready);
   const total = await page.evaluate(() => window.__show.total);
   const from = Math.round(+fromArg * fps), to = Math.round((toArg ? +toArg * 1000 : total) / 1000 * fps);

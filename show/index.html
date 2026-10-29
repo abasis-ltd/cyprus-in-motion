@@ -63,7 +63,7 @@
   .center .note { margin: 0 auto; max-width: calc(var(--u) * 56); }
   .stats { display: flex; gap: calc(var(--u) * 3); margin-bottom: calc(var(--u) * 2.4); }
   .center .stats { justify-content: center; }
-  .stat b { display: block; font-weight: 800; font-size: calc(var(--u) * 3.1); letter-spacing: -.045em; font-variant-numeric: tabular-nums; line-height: 1.05; }
+  .stat b { display: block; font-weight: 800; font-size: calc(var(--u) * 3.1); letter-spacing: -.045em; font-variant-numeric: tabular-nums; line-height: 1.05; white-space: nowrap; }
   .stat span { font-family: var(--mono); font-size: calc(var(--u) * .74); color: var(--blue-soft); text-transform: uppercase; letter-spacing: .14em; }
   .mega { font-weight: 800; font-size: calc(var(--u) * 7.6); letter-spacing: -.06em; line-height: 1; font-variant-numeric: tabular-nums; }
   .mega-sub { font-family: var(--mono); font-size: calc(var(--u) * 1.05); letter-spacing: .16em; text-transform: uppercase; color: var(--blue-soft); margin: calc(var(--u) * 1) 0 calc(var(--u) * 2.4); }
@@ -311,7 +311,7 @@
   const bike = O.bikestat, hmax = Math.max(...bike.hourly);
 
   // ---------- the show ----------
-  const SCENES = [
+  const FULL = [
     { id: 'open', ch: -1, dur: 15000, veil: 1, shade: 0, cam: [[0, 'prev'], [2200, 'islandRight']],
       map: t => ({ reveal: clamp(t / 7000), busAlpha: clamp((t - 6500) / 1500) }),
       html: `<div class="col-left">
@@ -725,6 +725,133 @@
         <div class="note" data-in="3000" style="margin-top:calc(var(--u)*2.4)">abasis.ai · gtfs.guru</div>
       </div>` }
   ];
+
+  // ---------- the short cut: every project in about 1:45 (?cut=short) ----------
+  const counter = (c, label) => kick(`${CH[c].n} ${CH[c].title} · ${label} / 12`, 150);
+  const intro = (p, c, label, statList, statusText) => `
+        ${counter(c, label)}
+        <h2 data-in="300">${p.name}</h2>
+        <p class="lede" data-in="800">${p.one}</p>
+        ${statList ? stats(statList, 1400) : ''}
+        <span class="pill" data-in="1900">${statusText || p.status}</span>`;
+  const clip = (url, src, from) => `<div class="col-right" style="width:calc(var(--u)*52)">${browser(url, `<video data-clip data-at="${-from}" muted playsinline preload="auto" src="../media/${src}"></video>`, 300)}</div>`;
+  const driverPhone = (at = 500) => `<div class="phone" data-in="${at}" data-fx="up" style="right:calc(var(--u)*5);top:calc(var(--u)*9.5)">
+        <div class="ph-top">DRIVER APP</div>
+        <div class="ph-card"><small>Vehicle</small><b>Bus 3</b></div>
+        <div class="ph-card"><small>Route</small><b>Morning run · 14 stops</b></div>
+        <div class="ph-go">● Trip in progress</div>
+        <div class="ph-log"></div>
+      </div>`;
+  const driverLog = (t, root) => {
+    const n = Math.floor(t / 1500), lines = [];
+    for (let k = n; k > n - 7 && k >= 0; k--) { const s = 7 * 3600 + 41 * 60 + k * 5; lines.push(`${hhmm(s)}:${String(s % 60).padStart(2, '0')}  position sent ✓`); }
+    root.querySelector('.ph-log').textContent = lines.join('\n');
+  };
+  const SHORT = [
+    { id: 's-open', ch: -1, dur: 7500, veil: 1, shade: 0, cam: [[0, 'prev'], [1600, 'islandRight']],
+      map: t => ({ reveal: clamp(t / 3200), busAlpha: clamp((t - 2800) / 900) }),
+      html: `<div class="col-left">
+        ${kick('Abasis.AI · Mobility Lab · Nicosia', 150)}
+        <h1 data-in="300">Cyprus<br>in <em>motion.</em></h1>
+        <p class="lede" data-in="900">Twelve projects that make public transport easier to plan, check and trust.</p>
+        ${stats([['860', 'bus routes'], ['5,249', 'stops'], ['51.7M', 'GPS positions']], 1500)}
+      </div>` },
+    { id: 's-kapnos', ch: 0, dur: 8000, veil: 1, shade: .35, speed: .6, cam: [[0, 'prev'], [1800, 'islandWide']],
+      map: () => ({ dim: .6 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*36)">${intro(PR.kapnos, 0, 1, [['4', 'airport routes'], ['5,955', 'trips'], ['16,076', 'stop times']])}</div>
+      ${clip('Transit Editor', 'gtfs-editor.mp4', 9500)}` },
+    { id: 's-limassol', ch: 0, dur: 7500, veil: 1, shade: 0, speed: .6, cam: [[0, 'prev'], [1800, 'shuttle']],
+      map: t => ({ dim: .55, busAlpha: .25, feeds: [{ key: 'limassol', progress: clamp((t - 300) / 3200), leftLabels: ['Limassol', 'Larnaca Airport'] }] }),
+      html: `<div class="col-left">${intro(PR.limassol, 0, 2, PR.limassol.numbers)}</div>` },
+    { id: 's-guru', ch: 1, dur: 8500, veil: 1, shade: .35, speed: .5, cam: [[0, 'prev'], [1800, 'islandWide']],
+      map: () => ({ dim: .6 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*36)">${intro(PR.guru, 1, 3, [['110', 'checks'], ['6.7×', 'faster*'], ['0 kB', 'uploaded · files stay local']])}
+        <div class="note" data-in="2300">*Whole-pipeline benchmark vs the Java validator 8.0.1 on a 16M-row feed; rule sets differ.</div></div>
+      ${clip('gtfs.guru', 'gtfs-guru.mp4', 6800)}` },
+    { id: 's-school', ch: 2, dur: 8000, veil: 1, shade: 0, speed: 1, cam: [[0, 'prev'], [1800, 'school']],
+      map: t => ({ focus: 'Limassol', busAlpha: .25, dim: .2, school: { alpha: clamp((t - 600) / 800) } }),
+      html: `<div class="col-left" style="width:calc(var(--u)*37)">${intro(PR.schoolbus, 2, 4, [['0', 'hardware boxes'], ['GTFS-RT', 'standard output'], ['5–20', 'pilot buses']])}
+        <div><span class="chip" data-in="2300">Simulated buses on real Limassol routes</span></div></div>
+      ${driverPhone()}`,
+      update: driverLog },
+    { id: 's-shadow', ch: 3, dur: 8500, veil: 1, shade: 0, speed: .25, cam: [[0, 'prev'], [1800, 'ghost']],
+      map: t => ({ focus: 'Nicosia', busAlpha: .2, dim: .15, ghost: { si: GHOST, phase: clamp((t - 600) / 7300), alpha: clamp((t - 300) / 600) } }),
+      html: `<div class="col-left" style="width:calc(var(--u)*37)">${intro(PR.shadow, 3, 5, PR.shadow.numbers)}</div>` },
+    { id: 's-timetable', ch: 4, dur: 8500, veil: 1, shade: .3, speed: .6, cam: [[0, 'prev'], [1800, 'nicosiaWide']],
+      map: () => ({ focus: 'Nicosia', dim: .5, pulse: { x: MOF.x, y: MOF.y, alpha: .8 } }),
+      html: `<div class="col-left" style="width:calc(var(--u)*36)">${intro(PR.timetable, 4, 6, [['11.9M', 'stop passages'], ['288', 'route groups'], ['82%', 'in the p10–p90 band']])}</div>
+      <div class="col-right" style="width:calc(var(--u)*42)">
+        <div class="mega" data-in="600"><span class="em">−<span data-count="25.7" data-dec="1" data-at="700" data-dur="1800">0</span>%</span></div>
+        <div class="mega-sub" data-in="800">arrival error vs the published timetable</div>
+        <div class="bars" data-in="1100">
+          <div class="lane"><span>Published timetable</span><div class="tr"><div data-bar="100" data-at="1300" style="background:var(--muted)"></div></div><b>4.94 min</b></div>
+          <div class="lane"><span>Historical median</span><div class="tr"><div data-bar="75.2" data-at="1500" style="background:var(--blue-mid)"></div></div><b>3.71 min</b></div>
+          <div class="lane"><span>Our CatBoost model</span><div class="tr"><div data-bar="74.3" data-at="1700" style="background:var(--blue)"></div></div><b>3.67 min</b></div>
+        </div>
+        <div class="note" data-in="2200">Mean absolute error · 260,000 held-out arrivals · 12–26 Oct 2026. Most of the gain comes from historical medians.</div>
+      </div>` },
+    { id: 's-motorist', ch: 5, dur: 8000, veil: 1, shade: .35, speed: .8, cam: [[0, 'prev'], [1800, 'islandWide']],
+      map: () => ({ dim: .6 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*36)">${intro(PR.motorist, 5, 7, PR.motorist.numbers)}</div>
+      ${clip('Cyprus Motorist Hub · demo mode', 'motorist-hub.mp4', 1400)}` },
+    { id: 's-bikestat', ch: 5, dur: 8000, veil: 1, shade: .35, speed: .8, cam: [[0, 'prev'], [1800, 'islandWide']],
+      map: () => ({ dim: .6 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*36)">${intro(PR.bikestat, 5, 8, PR.bikestat.numbers)}
+        <div class="note" data-in="2300">${PR.bikestat.note}</div></div>
+      ${clip('BikeStat · Nextbike Cyprus rentals', 'bikestat.mp4', 2600)}` },
+    { id: 's-exam', ch: 5, dur: 8500, veil: 1, shade: .3, speed: .8, cam: [[0, 'prev'], [1800, 'islandWide']],
+      map: () => ({ dim: .55 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*36)">
+        ${counter(5, '9–10')}
+        <h2 data-in="300">BusRider &amp; ExamRide</h2>
+        <p class="lede" data-in="800">${PR.busrider.one} Plus a light request form for exam-day rides.</p>
+        ${stats(PR.busrider.numbers, 1400)}
+        <span class="pill" data-in="1900">BusRider · ${PR.busrider.status}</span><span class="pill" data-in="2100">ExamRide · ${PR.examride.status}</span>
+      </div>
+      <div class="col-right" style="width:calc(var(--u)*42)"><div class="flow">
+        ${PR.busrider.steps.map((st, i) => `<div class="fs" data-in="${700 + i * 450}" data-fx="left"><i>${i + 1}</i><div><b>${['Pick your exam', 'Your pickup point', 'Pay securely', 'Routes plan themselves'][i]}</b><span>${st}</span></div></div>`).join('')}
+      </div></div>` },
+    { id: 's-zelo', ch: 5, dur: 7500, veil: 1, shade: .3, speed: .8, cam: [[0, 'prev'], [1800, 'islandWide']],
+      map: () => ({ dim: .55 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*36)">
+        ${counter(5, 11)}
+        <h2 data-in="300">${PR.zelo.name}</h2>
+        <p class="lede" data-in="800">${PR.zelo.one}</p>
+        ${steps(PR.zelo.steps, 1300, 350)}
+        <span class="pill" data-in="2900">${PR.zelo.status}</span>
+      </div>
+      <div class="phone" data-in="500" data-fx="up" style="right:calc(var(--u)*14);top:calc(var(--u)*9.5)">
+        <div class="tag-illus">ILLUSTRATION OF THE BOOKING FLOW</div>
+        <div class="ph-top">BOOK A PICKUP</div>
+        <div class="ph-card"><small>Identity</small><b>Verified ✓</b></div>
+        <div class="ph-card"><small>Pickup · today</small><b>Choose a 30-min slot</b></div>
+        <div class="slots">${['10:00', '10:30', '11:00', '11:30', '12:00', '12:30'].map((x, i) => `<span class="${i === 3 ? 'on' : ''}">${x}</span>`).join('')}</div>
+        <div class="ph-card"><small>Wallet</small><b>Top up with Stripe</b></div>
+        <div class="ph-go">Book slot</div>
+      </div>` },
+    { id: 's-cytransit', ch: 5, dur: 7500, veil: 1, shade: .35, speed: .8, cam: [[0, 'prev'], [1800, 'islandWide']],
+      map: () => ({ dim: .6 }),
+      html: `<div class="col-left" style="width:calc(var(--u)*34)">${intro(PR.cytransit, 5, 12, null)}
+        <div class="note" data-in="2300">${PR.cytransit.note}</div></div>
+      <div class="col-right" style="width:calc(var(--u)*44)"><div class="ring">
+        <svg viewBox="0 0 100 100" data-in="500"><circle cx="50" cy="50" r="36" fill="none" stroke="rgba(147,197,253,.35)" stroke-width=".35" stroke-dasharray="1.2 1.2"/></svg>
+        <div class="core"><div data-in="400" data-fx="scale">CyTransit<br>AI</div></div>
+        ${PR.cytransit.steps.map((st, i) => { const a = -Math.PI / 2 + i * Math.PI / 3; return `<div class="mod" style="left:${50 + 36 * Math.cos(a)}%;top:${50 + 36 * Math.sin(a)}%"><div data-in="${700 + i * 220}" data-fx="scale">${st}</div></div>`; }).join('')}
+      </div></div>` },
+    { id: 's-end', ch: 6, dur: 11000, veil: 0, shade: .55, hideQR: true, speed: 1, cam: [[0, 'prev'], [2500, 'island']],
+      map: t => ({ dim: clamp((t - 9800) / 1000) }),
+      html: `<div class="center">
+        ${kick('Abasis.AI · Nicosia, Cyprus', 150)}
+        <h1 data-in="300" style="font-size:calc(var(--u)*5.4)">Better data.<br><em>Better journeys.</em></h1>
+        <p class="lede" data-in="900">12 projects · create, validate, track, predict, understand, move</p>
+        <div class="qrs">
+          <div class="qrcard" data-in="1400" data-fx="scale"><img src="../assets/qr-site.svg" alt="QR code"><b>Explore all 12 projects</b><span>abasis-ltd.github.io/cyprus-in-motion</span></div>
+          <div class="qrcard" data-in="1700" data-fx="scale"><img src="../assets/qr-play.svg" alt="QR code"><b>Play Beat the Bus</b><span>60 seconds · real data</span></div>
+        </div>
+        <div class="note" data-in="2200" style="margin-top:calc(var(--u)*2.4)">abasis.ai · gtfs.guru</div>
+      </div>` }
+  ];
+  const SCENES = P.get('cut') === 'short' ? SHORT : FULL;
 
   // ---------- timeline ----------
   const START = [], TAU0 = [];
