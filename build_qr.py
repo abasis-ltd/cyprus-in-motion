@@ -8,7 +8,10 @@ from reportlab.graphics.barcode import qrencoder
 
 SITE = "https://abasis-ltd.github.io/cyprus-in-motion/"
 CODES = {"qr-site": SITE, "qr-play": SITE + "play/"}
-OUT = pathlib.Path(__file__).resolve().parent / "assets"
+HERE = pathlib.Path(__file__).resolve().parent
+OUT = HERE / "assets"
+# on-demand codes may carry personal data (e.g. a vCard): they go to a folder git ignores entirely
+PRIVATE = HERE / "private"
 QUIET = 4
 
 
@@ -64,11 +67,15 @@ def png(m, scale=12):
 if __name__ == "__main__":
     import sys
     # extra codes on demand, e.g. a contact card that must stay out of git:
-    #   python3 build_qr.py --text qr-vcard "$(cat contact.vcf)"
+    #   python3 build_qr.py --text qr-vcard "$(cat contact.vcf)"   -> private/qr-vcard.svg|png
+    out = OUT
     if len(sys.argv) == 4 and sys.argv[1] == "--text":
-        CODES = {sys.argv[2]: sys.argv[3]}
+        if "/" in sys.argv[2] or sys.argv[2].startswith("."):
+            sys.exit("name must be a plain file name")
+        CODES, out = {sys.argv[2]: sys.argv[3]}, PRIVATE
+        out.mkdir(exist_ok=True)
     for name, url in CODES.items():
         m = matrix(url)
-        (OUT / f"{name}.svg").write_text(svg(m))
-        (OUT / f"{name}.png").write_bytes(png(m))
+        (out / f"{name}.svg").write_text(svg(m))
+        (out / f"{name}.png").write_bytes(png(m))
         print(name, url.splitlines()[0], f"{len(m)}x{len(m)} modules")
