@@ -9,3 +9,6 @@ cards.html
 cards.pdf
 cards-*.png
 project-cards.*
+cards-*.bak
+*.html.bak
+*.pdf.bak
