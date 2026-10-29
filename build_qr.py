@@ -12,10 +12,16 @@ OUT = pathlib.Path(__file__).resolve().parent / "assets"
 QUIET = 4
 
 
-def matrix(text):
-    qr = qrencoder.QRCode(4, qrencoder.QRErrorCorrectLevel.M)
-    qr.addData(text)
-    qr.make()
+def matrix(text, version=4):
+    # smallest version that fits, starting from `version` (URLs fit in 4; a vCard needs more)
+    for v in range(version, 21):
+        try:
+            qr = qrencoder.QRCode(v, qrencoder.QRErrorCorrectLevel.M)
+            qr.addData(text)
+            qr.make()
+            break
+        except Exception:
+            continue
     n = qr.getModuleCount()
     return [[bool(qr.isDark(r, c)) for c in range(n)] for r in range(n)]
 
@@ -56,8 +62,13 @@ def png(m, scale=12):
 
 
 if __name__ == "__main__":
+    import sys
+    # extra codes on demand, e.g. a contact card that must stay out of git:
+    #   python3 build_qr.py --text qr-vcard "$(cat contact.vcf)"
+    if len(sys.argv) == 4 and sys.argv[1] == "--text":
+        CODES = {sys.argv[2]: sys.argv[3]}
     for name, url in CODES.items():
         m = matrix(url)
         (OUT / f"{name}.svg").write_text(svg(m))
         (OUT / f"{name}.png").write_bytes(png(m))
-        print(name, url, f"{len(m)}x{len(m)} modules")
+        print(name, url.splitlines()[0], f"{len(m)}x{len(m)} modules")

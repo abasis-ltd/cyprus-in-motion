@@ -3,3 +3,8 @@
 media/cyprus-in-motion-show-*.mp4
 media/cyprus-in-motion-teaser-*.mp4
 media/cyprus-in-motion-all-projects-*.mp4
+# personal contact cards stay local (not published)
+assets/qr-vcard.*
+cards.html
+cards.pdf
+cards-*.png
